@@ -38,3 +38,32 @@ def ask(msg: Message):
         input=msg.text,
     )
     return {"reply": interaction.output_text}
+
+class Deadline(BaseModel):
+    title: str      # e.g. "Midterm 1"
+    date: str       # e.g. "2026-10-15"
+    category: str   # assignment, lab, quiz, midterm, final, or other
+
+
+class DeadlineList(BaseModel):
+    deadlines: list[Deadline]
+
+
+@app.post("/parse")
+def parse(msg: Message):
+    prompt = (
+        "Extract every graded deadline from this syllabus text. "
+        "Write dates as YYYY-MM-DD. If no year is given, assume 2026. "
+        "category must be one of: assignment, lab, quiz, midterm, final, other.\n\n"
+        + msg.text
+    )
+    interaction = client.interactions.create(
+        model="gemini-3.8-flash",
+        input=prompt,
+        response_format={
+            "type": "text",
+            "mime_type": "application/json",
+            "schema": DeadlineList.model_json_schema(),
+        },
+    )
+    return DeadlineList.model_validate_json(interaction.output_text)
