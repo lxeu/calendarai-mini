@@ -1,4 +1,12 @@
 import { useState } from "react";
+import FullCalendar from "@fullcalendar/react";
+import themePlugin from "@fullcalendar/react/themes/monarch";
+import dayGridPlugin from "@fullcalendar/react/daygrid";
+
+// Calendar styles
+import "@fullcalendar/react/skeleton.css";
+import "@fullcalendar/react/themes/monarch/theme.css";
+import "@fullcalendar/react/themes/monarch/palettes/purple.css";
 
 // Matches the templates in main.py
 type Deadline = {
@@ -20,7 +28,6 @@ function App() {
   async function parseSyllabus() {
     setLoading(true);
     setError("");
-    setDeadlines([]);
     try {
       const res = await fetch("http://127.0.0.1:8000/parse", {
         method: "POST",
@@ -33,13 +40,21 @@ function App() {
         return;
       }
       const data: ParseResponse = await res.json();
-      setDeadlines(data.deadlines);
+      // Add the new deadlines to the ones we already have
+      setDeadlines((prev) => [...prev, ...data.deadlines]);
+      setSyllabus(""); // empty the box, ready for the next syllabus
     } catch {
       setError("Couldn't reach the backend. Is it running?");
     } finally {
       setLoading(false);
     }
   }
+
+  // Turn our deadlines into the format FullCalendar expects
+  const events = deadlines.map((d) => ({
+    title: d.title,
+    date: d.date,
+  }));
 
   return (
     <div>
@@ -55,14 +70,19 @@ function App() {
       <button onClick={parseSyllabus} disabled={loading || !syllabus}>
         {loading ? "Reading syllabus..." : "Find deadlines"}
       </button>
+      <button onClick={() => setDeadlines([])}>Clear calendar</button>
       {error && <p>{error}</p>}
-      <ul>
-        {deadlines.map((d, i) => (
-          <li key={i}>
-            {d.date}: {d.title} ({d.category})
-          </li>
-        ))}
-      </ul>
+
+      <FullCalendar
+        plugins={[themePlugin, dayGridPlugin]}
+        initialView="dayGridMonth"
+        headerToolbar={{
+          start: "prev,next today",
+          center: "title",
+          end: "",
+        }}
+        events={events}
+      />
     </div>
   );
 }
