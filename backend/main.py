@@ -25,6 +25,7 @@ class Message(BaseModel):
 
 
 class Deadline(BaseModel):
+    course: str
     title: str      # e.g. "Midterm 1"
     date: str       # e.g. "2026-10-15"
     category: str   # assignment, lab, quiz, midterm, final, or other
@@ -63,6 +64,7 @@ def parse(msg: Message):
     prompt = (
         "Extract every graded deadline from this syllabus text. "
         "Write dates as YYYY-MM-DD. If no year is given, assume 2026. "
+        "course is the course code, like CMPUT 174. "
         "category must be one of: assignment, lab, quiz, midterm, final, other.\n\n"
         + msg.text
     )

@@ -10,6 +10,7 @@ import "@fullcalendar/react/themes/monarch/palettes/purple.css";
 
 // Matches the templates in main.py
 type Deadline = {
+  course: string;
   title: string;
   date: string;
   category: string;
@@ -52,7 +53,7 @@ function App() {
 
   // Turn our deadlines into the format FullCalendar expects
   const events = deadlines.map((d) => ({
-    title: d.title,
+        title: `${d.course}: ${d.title}`,
     date: d.date,
   }));
 
