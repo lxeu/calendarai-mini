@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -12,9 +13,13 @@ MODEL = "gemini-3.5-flash-lite"
 
 app = FastAPI()
 
+origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
+if os.getenv("FRONTEND_URL"):
+    origins.append(os.getenv("FRONTEND_URL"))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
