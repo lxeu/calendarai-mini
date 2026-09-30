@@ -1,5 +1,6 @@
 import os
-from fastapi import FastAPI, HTTPException, UploadFile
+import httpx
+from fastapi import FastAPI, HTTPException, UploadFile, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -10,6 +11,23 @@ load_dotenv()
 client = genai.Client()
 
 MODEL = "gemini-3.5-flash-lite"
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_PUBLISHABLE_KEY")
+
+
+def require_user(authorization: str | None = Header(default=None)):
+    """Check the login token with Supabase. No valid login, no Gemini."""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Please log in first.")
+    res = httpx.get(
+        f"{SUPABASE_URL}/auth/v1/user",
+        headers={"Authorization": authorization, "apikey": SUPABASE_KEY},
+        timeout=10,
+    )
+    if res.status_code != 200:
+        raise HTTPException(status_code=401, detail="Your login expired. Please sign in again.")
+    return res.json()
 
 app = FastAPI()
 
@@ -82,12 +100,12 @@ def home():
 
 
 @app.post("/parse")
-def parse(msg: Message):
+def parse(msg: Message, user=Depends(require_user)):
     return extract_deadlines(msg.text)
 
 
 @app.post("/parse-pdf")
-def parse_pdf(file: UploadFile):
+def parse_pdf(file: UploadFile, user=Depends(require_user)):
     try:
         reader = PdfReader(file.file)
         text = "\n".join(page.extract_text() or "" for page in reader.pages)

@@ -1,3 +1,4 @@
+import { supabase } from "../lib/supabaseClient";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { API, type Deadline, type ParseResponse } from "../types";
@@ -39,12 +40,17 @@ export default function AddSyllabusPage({ onAdd }: Props) {
       setLoading(false);
     }
   }
+    // Grab the logged-in user's token to prove who we are
+  async function authHeader() {
+    const { data } = await supabase.auth.getSession();
+    return { Authorization: `Bearer ${data.session?.access_token}` };
+  }
 
   function parseText() {
-    sendRequest(() =>
+    sendRequest(async () =>
       fetch(`${API}/parse`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(await authHeader()) },
         body: JSON.stringify({ text: syllabus }),
       })
     );
@@ -53,7 +59,13 @@ export default function AddSyllabusPage({ onAdd }: Props) {
   function parsePdf(file: File) {
     const form = new FormData();
     form.append("file", file);
-    sendRequest(() => fetch(`${API}/parse-pdf`, { method: "POST", body: form }));
+    sendRequest(async () =>
+      fetch(`${API}/parse-pdf`, {
+        method: "POST",
+        headers: await authHeader(),
+        body: form,
+      })
+    );
   }
 
   // When the review queue runs out, go back to the calendar
