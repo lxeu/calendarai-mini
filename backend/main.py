@@ -1,13 +1,13 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from google import genai
+from pypdf import PdfReader
 
 load_dotenv()
 client = genai.Client()
 
-# One place to change the model for the whole app
 MODEL = "gemini-3.5-flash-lite"
 
 app = FastAPI()
@@ -25,7 +25,7 @@ class Message(BaseModel):
 
 
 class Deadline(BaseModel):
-    course: str
+    course: str     # e.g. "CMPUT 174"
     title: str      # e.g. "Midterm 1"
     date: str       # e.g. "2026-10-15"
     category: str   # assignment, lab, quiz, midterm, final, or other
@@ -46,29 +46,15 @@ def gemini_error(e: Exception):
     return HTTPException(status_code=500, detail="Something went wrong talking to Gemini.")
 
 
-@app.get("/")
-def home():
-    return {"message": "Backend is alive"}
-
-
-@app.post("/ask")
-def ask(msg: Message):
-    try:
-        interaction = client.interactions.create(model=MODEL, input=msg.text)
-    except Exception as e:
-        raise gemini_error(e)
-    return {"reply": interaction.output_text}
-
-
-@app.post("/parse")
-def parse(msg: Message):
+def extract_deadlines(text: str) -> DeadlineList:
+    """The shared brain: syllabus text in, deadlines out."""
     prompt = (
         "Extract every graded deadline from this syllabus text. "
         "Write dates as YYYY-MM-DD. If no year is given, assume 2026. "
         "course is the course code, like CMPUT 174. "
         "source is the exact sentence from the syllabus this deadline came from, copied word for word, unchanged. "
         "category must be one of: assignment, lab, quiz, midterm, final, other.\n\n"
-        + msg.text
+        + text
     )
     try:
         interaction = client.interactions.create(
@@ -83,3 +69,28 @@ def parse(msg: Message):
         return DeadlineList.model_validate_json(interaction.output_text)
     except Exception as e:
         raise gemini_error(e)
+
+
+@app.get("/")
+def home():
+    return {"message": "Backend is alive"}
+
+
+@app.post("/parse")
+def parse(msg: Message):
+    return extract_deadlines(msg.text)
+
+
+@app.post("/parse-pdf")
+def parse_pdf(file: UploadFile):
+    try:
+        reader = PdfReader(file.file)
+        text = "\n".join(page.extract_text() or "" for page in reader.pages)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Couldn't read that PDF.")
+    if not text.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="No text found in that PDF. It might be a scanned image. Try pasting the text instead.",
+        )
+    return extract_deadlines(text)
