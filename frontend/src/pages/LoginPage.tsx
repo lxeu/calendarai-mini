@@ -19,9 +19,21 @@ export default function LoginPage() {
     else if (!data.session) setMessage("Check your email to confirm your account, then sign in.");
   }
 
+  async function signInWithGoogle() {
+    setMessage("");
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin },
+    });
+    if (error) setMessage(error.message);
+  }
+
   return (
     <div style={{ maxWidth: 320, margin: "80px auto" }}>
       <h1>CalendarAI Mini</h1>
+      <button onClick={signInWithGoogle} style={{ display: "block", width: "100%", marginBottom: 16 }}>
+        Continue with Google
+      </button>
       <input
         type="email"
         placeholder="Email"
