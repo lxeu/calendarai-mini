@@ -1,7 +1,7 @@
 import { useState, type CSSProperties } from "react";
 import { NavLink, useLocation } from "react-router";
 import Logo from "./Logo";
-import { IconCalendar, IconLogout, IconSearch, IconSparkles } from "./Icons";
+import { IconCalendar, IconLogout, IconSearch, IconSparkles, IconUsers } from "./Icons";
 import { modKey } from "../lib/platform";
 
 type Props = {
@@ -14,7 +14,7 @@ type Props = {
 export default function NavBar({ email, avatarUrl, onSignOut, onOpenPalette }: Props) {
   const { pathname } = useLocation();
   const [avatarFailed, setAvatarFailed] = useState(false);
-  const activeTab = pathname.startsWith("/add") ? 1 : 0;
+  const activeTab = pathname.startsWith("/add") ? 1 : pathname.startsWith("/buddy") ? 2 : 0;
 
   return (
     <header className="nav-wrap">
@@ -26,7 +26,7 @@ export default function NavBar({ email, avatarUrl, onSignOut, onOpenPalette }: P
           </span>
         </NavLink>
 
-        <div className="seg" style={{ "--i": activeTab } as CSSProperties}>
+        <div className="seg" style={{ "--i": activeTab, "--n": 3 } as CSSProperties}>
           <span className="seg-ind" aria-hidden="true" />
           <NavLink to="/" end className="seg-link">
             <IconCalendar size={16} />
@@ -35,6 +35,10 @@ export default function NavBar({ email, avatarUrl, onSignOut, onOpenPalette }: P
           <NavLink to="/add" className="seg-link">
             <IconSparkles size={16} />
             <span>Add syllabus</span>
+          </NavLink>
+          <NavLink to="/buddy" className="seg-link">
+            <IconUsers size={16} />
+            <span>Study buddy</span>
           </NavLink>
         </div>
 

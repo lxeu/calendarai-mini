@@ -13,3 +13,8 @@ export function courseColor(courses: string[], course: string) {
   const i = courses.indexOf(course);
   return i >= 0 && i < COURSE_COLORS.length ? COURSE_COLORS[i] : OTHER_COLOR;
 }
+
+// Same rule as the database's find_study_buddy, so "cmput  174" and "CMPUT 174" meet in one queue
+export function normalizeCourse(course: string) {
+  return course.trim().replace(/\s+/g, " ").toUpperCase();
+}

@@ -96,6 +96,12 @@ export const IconTarget = (p: IconProps) => (
 export const IconBook = (p: IconProps) => (
   <Svg {...p}><path d="M4 19.5V5a2 2 0 0 1 2-2h13v15H6a2 2 0 0 0-2 2zm0 0A2 2 0 0 0 6 21.5h13" /></Svg>
 );
+export const IconUsers = (p: IconProps) => (
+  <Svg {...p}><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.3A6.5 6.5 0 0 1 21.5 20" /></Svg>
+);
+export const IconSend = (p: IconProps) => (
+  <Svg {...p}><path d="M21 3 10.5 13.5M21 3l-6.5 18-4-7.5-7.5-4z" /></Svg>
+);
 
 export function IconGoogle({ size = 18 }: { size?: number }) {
   return (

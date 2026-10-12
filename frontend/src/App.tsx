@@ -6,6 +6,7 @@ import type { Deadline } from "./types";
 import CalendarPage from "./pages/CalendarPage";
 import AddSyllabusPage from "./pages/AddSyllabusPage";
 import LoginPage from "./pages/LoginPage";
+import StudyBuddyPage from "./pages/StudyBuddyPage";
 import Background from "./components/Background";
 import CommandPalette from "./components/CommandPalette";
 import DeadlineModal from "./components/DeadlineModal";
@@ -138,6 +139,7 @@ function Shell({ session, deadlines, onAdd, onClear }: ShellProps) {
         <Routes>
           <Route path="/" element={<CalendarPage deadlines={deadlines} onAdd={onAdd} onClear={onClear} />} />
           <Route path="/add" element={<AddSyllabusPage onAdd={onAdd} />} />
+          <Route path="/buddy" element={<StudyBuddyPage session={session} deadlines={deadlines} />} />
         </Routes>
       </main>
 

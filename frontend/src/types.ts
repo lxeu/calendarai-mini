@@ -13,3 +13,23 @@ export type Deadline = {
 export type ParseResponse = {
   deadlines: Deadline[];
 };
+export type StudyMatch = {
+  id: number;
+  course: string;
+  user_a: string;
+  user_b: string;
+  user_a_name: string;
+  user_b_name: string;
+  user_a_avatar: string | null;
+  user_b_avatar: string | null;
+  ended_at: string | null;
+  created_at: string;
+};
+
+export type StudyMessage = {
+  id: number;
+  match_id: number;
+  sender: string;
+  body: string;
+  created_at: string;
+};

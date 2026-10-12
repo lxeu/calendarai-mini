@@ -1,4 +1,4 @@
-import { useId, useState, type CSSProperties } from "react";
+import { useEffect, useId, useState, type CSSProperties } from "react";
 import { supabase } from "../lib/supabaseClient";
 import Logo from "../components/Logo";
 import RotatingWord from "../components/RotatingWord";
@@ -11,13 +11,29 @@ import { addDays, formatShort, todayISO } from "../lib/dates";
 type Message = { text: string; kind: "error" | "info" };
 type Busy = "signin" | "signup" | "google" | null;
 
+// Only UAlberta accounts can sign up. The real check is the Supabase signup hook
+// (supabase/restrict_signup.sql); this one just gives a faster, friendlier message.
+const SCHOOL_DOMAIN = "ualberta.ca";
+
+// If Supabase rejected a Google signup, it sends us back with ?error_description=... (or #error_description=...)
+function oauthError(): Message | null {
+  const params = new URLSearchParams(window.location.search + "&" + window.location.hash.slice(1));
+  const text = params.get("error_description");
+  return text ? { text, kind: "error" } : null;
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState<Message | null>(null);
+  const [message, setMessage] = useState<Message | null>(oauthError);
   const [busy, setBusy] = useState<Busy>(null);
   const [showPassword, setShowPassword] = useState(false);
   const id = useId();
+
+  // Clear the error out of the address bar so a refresh doesn't show it again
+  useEffect(() => {
+    if (oauthError()) window.history.replaceState(null, "", window.location.pathname);
+  }, []);
 
   async function signIn() {
     setMessage(null);
@@ -29,6 +45,10 @@ export default function LoginPage() {
 
   async function signUp() {
     setMessage(null);
+    if (!email.trim().toLowerCase().endsWith(`@${SCHOOL_DOMAIN}`)) {
+      setMessage({ text: `Please sign up with your @${SCHOOL_DOMAIN} email.`, kind: "error" });
+      return;
+    }
     setBusy("signup");
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) setMessage({ text: error.message, kind: "error" });
@@ -41,7 +61,8 @@ export default function LoginPage() {
     setBusy("google");
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.origin },
+      // hd tells Google to only offer UAlberta accounts in its account picker
+      options: { redirectTo: window.location.origin, queryParams: { hd: SCHOOL_DOMAIN } },
     });
     if (error) {
       setMessage({ text: error.message, kind: "error" });
@@ -109,7 +130,7 @@ export default function LoginPage() {
                 id={`${id}-email`}
                 className="input has-icon"
                 type="email"
-                placeholder="you@school.edu"
+                placeholder="you@ualberta.ca"
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
