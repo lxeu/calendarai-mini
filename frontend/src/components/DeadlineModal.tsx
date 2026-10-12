@@ -38,10 +38,12 @@ export default function DeadlineModal({ deadline, color, onClose }: Props) {
         )}
       </p>
 
-      <figure className="quote">
-        <figcaption>From your syllabus</figcaption>
-        <blockquote>{deadline.source}</blockquote>
-      </figure>
+      {deadline.source && (
+        <figure className="quote">
+          <figcaption>From your syllabus</figcaption>
+          <blockquote>{deadline.source}</blockquote>
+        </figure>
+      )}
 
       <div className="dm-actions">
         <a className="btn btn-ghost" href={googleCalendarUrl(deadline)} target="_blank" rel="noreferrer">

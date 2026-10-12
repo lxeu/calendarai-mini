@@ -4,6 +4,7 @@ import themePlugin from "@fullcalendar/react/themes/monarch";
 import dayGridPlugin from "@fullcalendar/react/daygrid";
 import { Link } from "react-router";
 import type { Deadline } from "../types";
+import AddEventModal from "../components/AddEventModal";
 import Countdown from "../components/Countdown";
 import CountUp from "../components/CountUp";
 import CrunchStrip from "../components/CrunchStrip";
@@ -24,15 +25,17 @@ import "../styles/calendar.css";
 
 type Props = {
   deadlines: Deadline[];
+  onAdd: (items: Deadline[]) => void;
   onClear: () => void;
 };
 
 const cssVars = (vars: Record<string, string | number>) => vars as CSSProperties;
 
-export default function CalendarPage({ deadlines, onClear }: Props) {
+export default function CalendarPage({ deadlines, onAdd, onClear }: Props) {
   const [hidden, setHidden] = useState<string[]>([]);
   const [selected, setSelected] = useState<Deadline | null>(null);
   const [confirmingClear, setConfirmingClear] = useState(false);
+  const [adding, setAdding] = useState(false);
 
   const courses = listCourses(deadlines);
   const colorFor = (course: string) => courseColor(courses, course);
@@ -58,6 +61,8 @@ export default function CalendarPage({ deadlines, onClear }: Props) {
     setHidden((prev) => (prev.includes(course) ? prev.filter((c) => c !== course) : [...prev, course]));
   }
 
+  const addEventModal = adding && <AddEventModal courses={courses} onAdd={onAdd} onClose={() => setAdding(false)} />;
+
   if (deadlines.length === 0) {
     return (
       <div className="empty">
@@ -80,6 +85,10 @@ export default function CalendarPage({ deadlines, onClear }: Props) {
         <Link to="/add" className="btn btn-primary btn-lg reveal" style={cssVars({ "--i": 3 })}>
           Add your first syllabus <IconArrowRight size={18} />
         </Link>
+        <button className="link-btn reveal" style={cssVars({ "--i": 4 })} onClick={() => setAdding(true)}>
+          or add an event by hand
+        </button>
+        {addEventModal}
       </div>
     );
   }
@@ -103,6 +112,9 @@ export default function CalendarPage({ deadlines, onClear }: Props) {
             title="Download as an .ics file for Google, Apple or Outlook Calendar"
           >
             <IconDownload size={16} /> Export .ics
+          </button>
+          <button className="btn btn-ghost" onClick={() => setAdding(true)}>
+            <IconPlus size={16} /> Add event
           </button>
           <Link to="/add" className="btn btn-primary">
             <IconPlus size={16} /> Add syllabus
@@ -270,6 +282,8 @@ export default function CalendarPage({ deadlines, onClear }: Props) {
       {selected && (
         <DeadlineModal deadline={selected} color={colorFor(selected.course)} onClose={() => setSelected(null)} />
       )}
+
+      {addEventModal}
 
       {confirmingClear && (
         <Modal label="Clear calendar" onClose={() => setConfirmingClear(false)} className="confirm-modal">

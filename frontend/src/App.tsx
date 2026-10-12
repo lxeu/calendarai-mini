@@ -136,7 +136,7 @@ function Shell({ session, deadlines, onAdd, onClear }: ShellProps) {
 
       <main className="container page" key={location.pathname}>
         <Routes>
-          <Route path="/" element={<CalendarPage deadlines={deadlines} onClear={onClear} />} />
+          <Route path="/" element={<CalendarPage deadlines={deadlines} onAdd={onAdd} onClear={onClear} />} />
           <Route path="/add" element={<AddSyllabusPage onAdd={onAdd} />} />
         </Routes>
       </main>

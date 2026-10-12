@@ -41,7 +41,7 @@ export function buildICS(deadlines: Deadline[]) {
         `DTSTART;VALUE=DATE:${compact(d.date)}`,
         `DTEND;VALUE=DATE:${compact(addDays(d.date, 1))}`,
         `SUMMARY:${escapeText(`${d.course}: ${d.title}`)}`,
-        `DESCRIPTION:${escapeText(`${d.category}\n\nFrom your syllabus:\n"${d.source}"`)}`,
+        `DESCRIPTION:${escapeText(d.source ? `${d.category}\n\nFrom your syllabus:\n"${d.source}"` : d.category)}`,
         `CATEGORIES:${escapeText(d.category)}`,
         "END:VEVENT",
       );
@@ -66,7 +66,7 @@ export function googleCalendarUrl(d: Deadline) {
   const params = new URLSearchParams({
     action: "TEMPLATE",
     text: `${d.course}: ${d.title}`,
-    details: `From your syllabus:\n"${d.source}"`,
+    details: d.source ? `From your syllabus:\n"${d.source}"` : d.category,
   });
   if (isValidISO(d.date)) params.set("dates", `${compact(d.date)}/${compact(addDays(d.date, 1))}`);
   return `https://calendar.google.com/calendar/render?${params}`;
