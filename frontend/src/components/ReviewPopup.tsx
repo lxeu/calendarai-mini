@@ -75,11 +75,11 @@ export default function ReviewPopup({ pending, instructor, onInstructorChange, o
 
           {instructor !== undefined && (
             <div className="field rv-instructor">
-              <label htmlFor={`${id}-instructor`}>Instructor (shown to classmates)</label>
+              <label htmlFor={`${id}-instructor`}>Instructors (shown to classmates)</label>
               <input
                 id={`${id}-instructor`}
                 className="input"
-                placeholder="Who teaches your section?"
+                placeholder="e.g. Dr. Beth Powell, Dr. Valerie Budd"
                 value={instructor}
                 onChange={(e) => onInstructorChange?.(e.target.value)}
               />
