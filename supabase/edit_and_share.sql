@@ -45,6 +45,9 @@ create table if not exists public.shared_syllabi (
 );
 create index if not exists shared_syllabi_course_idx on public.shared_syllabi (course);
 
+-- Different sections can have different instructors (and dates), so show who it's from
+alter table public.shared_syllabi add column if not exists instructor text;
+
 alter table public.shared_syllabi enable row level security;
 
 drop policy if exists "anyone logged in can browse" on public.shared_syllabi;

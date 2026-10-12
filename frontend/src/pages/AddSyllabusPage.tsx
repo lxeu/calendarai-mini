@@ -16,7 +16,7 @@ type Props = {
 };
 
 // Share what you confirmed: one shared syllabus per course, replacing your previous share of it
-async function shareWithClassmates(userId: string, items: Deadline[]) {
+async function shareWithClassmates(userId: string, items: Deadline[], instructor: string) {
   const byCourse = new Map<string, Deadline[]>();
   for (const { course, title, date, category, source } of items) {
     const c = normalizeCourse(course);
@@ -27,6 +27,7 @@ async function shareWithClassmates(userId: string, items: Deadline[]) {
   const rows = [...byCourse].map(([course, list]) => ({
     course,
     deadlines: list,
+    instructor: instructor.trim() || null,
     uploaded_by: userId,
     updated_at: new Date().toISOString(),
   }));
@@ -45,6 +46,8 @@ export default function AddSyllabusPage({ userId, deadlines, onAdd }: Props) {
   const [share, setShare] = useState(true);
   // Deadlines that came from a classmate's share aren't re-shared
   const [fromShared, setFromShared] = useState(false);
+  // Who teaches it, as read from the syllabus; shown to classmates so they can pick their section
+  const [instructor, setInstructor] = useState("");
   const confirmed = useRef<Deadline[]>([]);
   const navigate = useNavigate();
 
@@ -60,9 +63,10 @@ export default function AddSyllabusPage({ userId, deadlines, onAdd }: Props) {
       }
       const data: ParseResponse = await res.json();
       setFromShared(false);
+      setInstructor(data.instructor ?? "");
       if (autoAdd) {
         onAdd(data.deadlines);
-        if (share) shareWithClassmates(userId, data.deadlines);
+        if (share) shareWithClassmates(userId, data.deadlines, data.instructor ?? "");
         navigate("/"); // straight to the calendar
       } else {
         setPending(data.deadlines);
@@ -142,7 +146,7 @@ export default function AddSyllabusPage({ userId, deadlines, onAdd }: Props) {
   function finishReview(extra: Deadline[] = []) {
     const all = [...confirmed.current, ...extra];
     confirmed.current = [];
-    if (share && !fromShared) shareWithClassmates(userId, all);
+    if (share && !fromShared) shareWithClassmates(userId, all, instructor);
     navigate("/");
   }
 
@@ -291,6 +295,8 @@ export default function AddSyllabusPage({ userId, deadlines, onAdd }: Props) {
       {pending.length > 0 && (
         <ReviewPopup
           pending={pending}
+          instructor={share && !fromShared ? instructor : undefined}
+          onInstructorChange={setInstructor}
           onUpdate={(field, value) =>
             setPending((prev) => [{ ...prev[0], [field]: value }, ...prev.slice(1)])
           }

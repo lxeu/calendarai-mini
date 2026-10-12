@@ -10,13 +10,16 @@ const EXIT_MS = 280;
 
 type Props = {
   pending: Deadline[];
+  // Shown (and editable) only when these deadlines will be shared with classmates
+  instructor?: string;
+  onInstructorChange?: (value: string) => void;
   onUpdate: (field: keyof Deadline, value: string) => void;
   onConfirm: () => void;
   onDelete: () => void;
   onConfirmAll: () => void;
 };
 
-export default function ReviewPopup({ pending, onUpdate, onConfirm, onDelete, onConfirmAll }: Props) {
+export default function ReviewPopup({ pending, instructor, onInstructorChange, onUpdate, onConfirm, onDelete, onConfirmAll }: Props) {
   const current = pending[0];
   const id = useId();
   const confirmRef = useRef<HTMLButtonElement>(null);
@@ -69,6 +72,19 @@ export default function ReviewPopup({ pending, onUpdate, onConfirm, onDelete, on
           </div>
 
           <h2 className="rv-title">Does this look right?</h2>
+
+          {instructor !== undefined && (
+            <div className="field rv-instructor">
+              <label htmlFor={`${id}-instructor`}>Instructor (shown to classmates)</label>
+              <input
+                id={`${id}-instructor`}
+                className="input"
+                placeholder="Who teaches your section?"
+                value={instructor}
+                onChange={(e) => onInstructorChange?.(e.target.value)}
+              />
+            </div>
+          )}
 
           <figure className="quote">
             <figcaption>From your syllabus</figcaption>

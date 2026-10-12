@@ -15,6 +15,7 @@ export type SharedSyllabus = {
   id: number;
   course: string;
   deadlines: Deadline[];
+  instructor: string | null;
   uploaded_by: string;
   use_count: number;
   updated_at: string;
@@ -22,6 +23,7 @@ export type SharedSyllabus = {
 
 export type ParseResponse = {
   deadlines: Deadline[];
+  instructor?: string;
 };
 export type StudyMatch = {
   id: number;

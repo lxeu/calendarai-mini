@@ -57,6 +57,7 @@ class Deadline(BaseModel):
 
 class DeadlineList(BaseModel):
     deadlines: list[Deadline]
+    instructor: str = ""  # e.g. "Dr. Jane Smith"; empty if the syllabus doesn't say
 
 
 def gemini_error(e: Exception):
@@ -76,7 +77,8 @@ def extract_deadlines(text: str) -> DeadlineList:
         "Write dates as YYYY-MM-DD. If no year is given, assume 2026. "
         "course is the course code, like CMPUT 174. "
         "source is the exact sentence from the syllabus this deadline came from, copied word for word, unchanged. "
-        "category must be one of: assignment, lab, quiz, midterm, final, other.\n\n"
+        "category must be one of: assignment, lab, quiz, midterm, final, other. "
+        "instructor is the main instructor's name as written in the syllabus, or an empty string if none is given.\n\n"
         + text
     )
     try:

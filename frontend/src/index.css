@@ -3267,3 +3267,9 @@ input[type="date"].input {
   color: var(--lilac);
   font-weight: 600;
 }
+.shared-meta .shared-instructor {
+  color: var(--ink);
+}
+.rv-instructor {
+  margin-bottom: 16px;
+}

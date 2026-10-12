@@ -23,14 +23,16 @@ export default function SharedSyllabi({ userId, disabled, onUse }: Props) {
   // Search as you type (after a short pause), most-used first
   useEffect(() => {
     const timer = setTimeout(() => {
-      const q = query.trim().replace(/[%_\\]/g, (c) => "\\" + c);
+      // Values are quoted below (so "Dr. Smith" works); drop the characters that could break out of the quotes
+      const q = query.trim().replace(/[%_\\,()"*]/g, "");
       let request = supabase
         .from("shared_syllabi")
-        .select("id, course, deadlines, uploaded_by, use_count, updated_at")
+        .select("id, course, deadlines, instructor, uploaded_by, use_count, updated_at")
         .gte("updated_at", addDays(todayISO(), -FRESH_DAYS))
         .order("use_count", { ascending: false })
         .limit(6);
-      if (q) request = request.ilike("course", `%${q}%`);
+      // Match the course code or the instructor's name
+      if (q) request = request.or(`course.ilike."*${q}*",instructor.ilike."*${q}*"`);
       request.then(({ data, error }) => {
         // Table missing (SQL not run yet) or offline: just hide the section
         if (error) console.error(error);
@@ -65,7 +67,7 @@ export default function SharedSyllabi({ userId, disabled, onUse }: Props) {
         <IconSearch size={17} />
         <input
           className="input has-icon"
-          placeholder="Search a course, e.g. CMPUT 174"
+          placeholder="Search a course or instructor, e.g. CMPUT 174"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           aria-label="Search shared syllabi"
@@ -86,6 +88,7 @@ export default function SharedSyllabi({ userId, disabled, onUse }: Props) {
                   {s.course}
                 </span>
                 <span className="shared-meta">
+                  {s.instructor && <b className="shared-instructor">{s.instructor} · </b>}
                   {s.deadlines.length} deadlines · used by {s.use_count} · updated {relativeLabel(updated).toLowerCase()}
                   {mine && <b> · shared by you</b>}
                 </span>
