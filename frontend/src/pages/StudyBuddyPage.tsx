@@ -4,7 +4,7 @@ import { supabase } from "../lib/supabaseClient";
 import type { Deadline, StudyMatch, StudyMessage } from "../types";
 import Modal from "../components/Modal";
 import { IconPlus, IconSend, IconUsers, IconX } from "../components/Icons";
-import { courseColor, listCourses, normalizeCourse } from "../lib/courses";
+import { PERSONAL, courseColor, listCourses, normalizeCourse } from "../lib/courses";
 import { toast } from "../lib/toast";
 
 type Props = {
@@ -69,7 +69,8 @@ export default function StudyBuddyPage({ session, deadlines }: Props) {
       ...waiting,
       ...matches.map((m) => m.course),
     ]),
-  ].filter(Boolean);
+    // course names are uppercased here, so compare against the normalized "PERSONAL"
+  ].filter((c) => c && c !== normalizeCourse(PERSONAL));
   const calendarCourses = listCourses(deadlines).map(normalizeCourse);
   const colorFor = (course: string) => courseColor(calendarCourses, course);
   const open = matches.find((m) => m.id === openId) ?? null;

@@ -17,6 +17,7 @@ import { confetti } from "./lib/confetti";
 import { courseColor, listCourses } from "./lib/courses";
 import { downloadICS } from "./lib/ics";
 import { modKey } from "./lib/platform";
+import { sendDueNotifications } from "./lib/reminders";
 import { toast } from "./lib/toast";
 
 export default function App() {
@@ -63,6 +64,35 @@ export default function App() {
     if (items.length > 1) toast(`Added ${items.length} deadlines to your calendar`, "success");
   }
 
+  // Edit a deadline (also used for marking it done)
+  async function saveDeadline(changes: Deadline) {
+    const { id, course, title, date, category, done } = changes;
+    const { data, error } = await supabase
+      .from("deadlines")
+      .update({ course, title, date, category, done: done ?? false })
+      .eq("id", id)
+      .select();
+    // RLS silently skips rows you aren't allowed to edit, so an empty result means "not saved"
+    if (error || data.length === 0) {
+      toast("Couldn't save: " + (error?.message ?? "editing isn't enabled yet (run supabase/edit_and_share.sql)"), "error");
+      return;
+    }
+    const before = deadlines.find((d) => d.id === id);
+    setDeadlines((prev) => prev.map((d) => (d.id === id ? data[0] : d)));
+    if (!!before?.done !== !!done) toast(done ? `Nice, "${title}" is done` : "Marked not done", "success");
+    else toast("Saved", "success");
+  }
+
+  async function deleteDeadline(id: number) {
+    const { error } = await supabase.from("deadlines").delete().eq("id", id);
+    if (error) {
+      toast("Couldn't delete: " + error.message, "error");
+      return;
+    }
+    setDeadlines((prev) => prev.filter((d) => d.id !== id));
+    toast("Deleted", "info");
+  }
+
   async function clearDeadlines() {
     // RLS makes sure this only deletes YOUR rows
     const { error } = await supabase.from("deadlines").delete().gt("id", 0);
@@ -83,7 +113,14 @@ export default function App() {
         <LoginPage />
       ) : (
         <BrowserRouter>
-          <Shell session={session} deadlines={deadlines} onAdd={addDeadlines} onClear={clearDeadlines} />
+          <Shell
+            session={session}
+            deadlines={deadlines}
+            onAdd={addDeadlines}
+            onSave={saveDeadline}
+            onDelete={deleteDeadline}
+            onClear={clearDeadlines}
+          />
         </BrowserRouter>
       )}
       <Toaster />
@@ -95,11 +132,13 @@ type ShellProps = {
   session: Session;
   deadlines: Deadline[];
   onAdd: (items: Deadline[]) => void;
+  onSave: (changes: Deadline) => void;
+  onDelete: (id: number) => void;
   onClear: () => void;
 };
 
 // Everything you see once logged in: nav, pages, and the Cmd+K palette
-function Shell({ session, deadlines, onAdd, onClear }: ShellProps) {
+function Shell({ session, deadlines, onAdd, onSave, onDelete, onClear }: ShellProps) {
   const location = useLocation();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [focused, setFocused] = useState<Deadline | null>(null);
@@ -117,6 +156,13 @@ function Shell({ session, deadlines, onAdd, onClear }: ShellProps) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
+  // Browser reminders (if turned on): check now, then every hour while the tab is open
+  useEffect(() => {
+    sendDueNotifications(deadlines);
+    const timer = setInterval(() => sendDueNotifications(deadlines), 60 * 60 * 1000);
+    return () => clearInterval(timer);
+  }, [deadlines]);
 
   function exportAll() {
     downloadICS(deadlines);
@@ -137,8 +183,8 @@ function Shell({ session, deadlines, onAdd, onClear }: ShellProps) {
 
       <main className="container page" key={location.pathname}>
         <Routes>
-          <Route path="/" element={<CalendarPage deadlines={deadlines} onAdd={onAdd} onClear={onClear} />} />
-          <Route path="/add" element={<AddSyllabusPage onAdd={onAdd} />} />
+          <Route path="/" element={<CalendarPage deadlines={deadlines} onAdd={onAdd} onSave={onSave} onDelete={onDelete} onClear={onClear} />} />
+          <Route path="/add" element={<AddSyllabusPage userId={session.user.id} deadlines={deadlines} onAdd={onAdd} />} />
           <Route path="/buddy" element={<StudyBuddyPage session={session} deadlines={deadlines} />} />
         </Routes>
       </main>
@@ -160,7 +206,14 @@ function Shell({ session, deadlines, onAdd, onClear }: ShellProps) {
         />
       )}
       {focused && (
-        <DeadlineModal deadline={focused} color={courseColor(courses, focused.course)} onClose={() => setFocused(null)} />
+        <DeadlineModal
+          deadline={focused}
+          color={courseColor(courses, focused.course)}
+          courses={courses}
+          onSave={onSave}
+          onDelete={() => focused.id && onDelete(focused.id)}
+          onClose={() => setFocused(null)}
+        />
       )}
     </div>
   );

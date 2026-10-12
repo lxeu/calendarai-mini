@@ -5,6 +5,10 @@ import type { Deadline } from "../types";
 export const COURSE_COLORS = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9", "#e66767"];
 export const OTHER_COLOR = "#8a87a8";
 
+// Outside-of-school events all live under this one "course"
+export const PERSONAL = "Personal";
+export const isPersonal = (course: string) => course === PERSONAL;
+
 export function listCourses(deadlines: Deadline[]) {
   return [...new Set(deadlines.map((d) => d.course))];
 }

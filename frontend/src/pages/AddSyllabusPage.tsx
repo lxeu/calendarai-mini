@@ -1,22 +1,51 @@
 import { supabase } from "../lib/supabaseClient";
-import { useState, type CSSProperties, type DragEvent } from "react";
+import { useRef, useState, type CSSProperties, type DragEvent } from "react";
 import { useNavigate } from "react-router";
-import { API, type Deadline, type ParseResponse } from "../types";
+import { API, type Deadline, type ParseResponse, type SharedSyllabus } from "../types";
 import ReviewPopup from "../components/ReviewPopup";
+import SharedSyllabi from "../components/SharedSyllabi";
+import { isPersonal, normalizeCourse } from "../lib/courses";
+import { toast } from "../lib/toast";
 import ScanLoader from "../components/ScanLoader";
 import { IconAlert, IconArrowRight, IconCalendar, IconCheck, IconFile, IconSparkles, IconUpload } from "../components/Icons";
 
 type Props = {
+  userId: string;
+  deadlines: Deadline[];
   onAdd: (items: Deadline[]) => void;
 };
 
-export default function AddSyllabusPage({ onAdd }: Props) {
+// Share what you confirmed: one shared syllabus per course, replacing your previous share of it
+async function shareWithClassmates(userId: string, items: Deadline[]) {
+  const byCourse = new Map<string, Deadline[]>();
+  for (const { course, title, date, category, source } of items) {
+    const c = normalizeCourse(course);
+    if (!c || isPersonal(course)) continue;
+    byCourse.set(c, [...(byCourse.get(c) ?? []), { course, title, date, category, source }]);
+  }
+  if (byCourse.size === 0) return;
+  const rows = [...byCourse].map(([course, list]) => ({
+    course,
+    deadlines: list,
+    uploaded_by: userId,
+    updated_at: new Date().toISOString(),
+  }));
+  const { error } = await supabase.from("shared_syllabi").upsert(rows, { onConflict: "course,uploaded_by" });
+  if (error) console.error(error);
+  else toast(`Shared ${[...byCourse.keys()].join(", ")} with classmates`, "success");
+}
+
+export default function AddSyllabusPage({ userId, deadlines, onAdd }: Props) {
   const [syllabus, setSyllabus] = useState("");
   const [pending, setPending] = useState<Deadline[]>([]);
   const [autoAdd, setAutoAdd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [dragging, setDragging] = useState(false);
+  const [share, setShare] = useState(true);
+  // Deadlines that came from a classmate's share aren't re-shared
+  const [fromShared, setFromShared] = useState(false);
+  const confirmed = useRef<Deadline[]>([]);
   const navigate = useNavigate();
 
   async function sendRequest(makeRequest: () => Promise<Response>) {
@@ -30,8 +59,10 @@ export default function AddSyllabusPage({ onAdd }: Props) {
         return;
       }
       const data: ParseResponse = await res.json();
+      setFromShared(false);
       if (autoAdd) {
         onAdd(data.deadlines);
+        if (share) shareWithClassmates(userId, data.deadlines);
         navigate("/"); // straight to the calendar
       } else {
         setPending(data.deadlines);
@@ -88,9 +119,35 @@ export default function AddSyllabusPage({ onAdd }: Props) {
     if (file) handleFile(file);
   }
 
-  // When the review queue runs out, go back to the calendar
+  // Add a classmate's syllabus, skipping anything already on your calendar
+  function addShared(s: SharedSyllabus) {
+    const have = new Set(deadlines.map((d) => `${normalizeCourse(d.course)}|${d.title.trim().toLowerCase()}|${d.date}`));
+    const fresh = s.deadlines.filter((d) => !have.has(`${normalizeCourse(d.course)}|${d.title.trim().toLowerCase()}|${d.date}`));
+    if (fresh.length === 0) {
+      toast(`You already have all of ${s.course}'s deadlines`, "info");
+      return;
+    }
+    supabase.rpc("use_shared_syllabus", { p_id: s.id }).then(({ error }) => error && console.error(error));
+    setError("");
+    setFromShared(true);
+    if (autoAdd) {
+      onAdd(fresh);
+      navigate("/");
+    } else {
+      setPending(fresh);
+    }
+  }
+
+  // When the review queue runs out, share what was confirmed and go back to the calendar
+  function finishReview(extra: Deadline[] = []) {
+    const all = [...confirmed.current, ...extra];
+    confirmed.current = [];
+    if (share && !fromShared) shareWithClassmates(userId, all);
+    navigate("/");
+  }
+
   function finishIfLast() {
-    if (pending.length === 1) navigate("/");
+    if (pending.length === 1) finishReview();
   }
 
   return (
@@ -107,6 +164,8 @@ export default function AddSyllabusPage({ onAdd }: Props) {
           each one before it lands on your calendar.
         </p>
       </header>
+
+      <SharedSyllabi userId={userId} disabled={loading || pending.length > 0} onUse={addShared} />
 
       <div className="add-grid">
         <label
@@ -193,6 +252,20 @@ export default function AddSyllabusPage({ onAdd }: Props) {
         </span>
       </label>
 
+      <label className="switch reveal" style={{ "--i": 3 } as CSSProperties}>
+        <input type="checkbox" checked={share} onChange={(e) => setShare(e.target.checked)} />
+        <span className="switch-track" aria-hidden="true">
+          <span className="switch-thumb" />
+        </span>
+        <span className="switch-text">
+          <b>Share with classmates</b>
+          <span>
+            Once you've reviewed them, your course deadlines become searchable for other students in the course.
+            Only the deadlines are shared, never your name or email.
+          </span>
+        </span>
+      </label>
+
       {error && (
         <div className="notice notice-error" role="alert">
           <IconAlert size={18} />
@@ -223,6 +296,7 @@ export default function AddSyllabusPage({ onAdd }: Props) {
           }
           onConfirm={() => {
             onAdd([pending[0]]);
+            confirmed.current.push(pending[0]);
             setPending((prev) => prev.slice(1));
             finishIfLast();
           }}
@@ -233,7 +307,7 @@ export default function AddSyllabusPage({ onAdd }: Props) {
           onConfirmAll={() => {
             onAdd(pending);
             setPending([]);
-            navigate("/");
+            finishReview(pending);
           }}
         />
       )}

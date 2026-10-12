@@ -8,6 +8,16 @@ export type Deadline = {
   date: string;
   category: string;
   source: string;
+  done?: boolean;
+};
+
+export type SharedSyllabus = {
+  id: number;
+  course: string;
+  deadlines: Deadline[];
+  uploaded_by: string;
+  use_count: number;
+  updated_at: string;
 };
 
 export type ParseResponse = {

@@ -4,12 +4,13 @@ import themePlugin from "@fullcalendar/react/themes/monarch";
 import dayGridPlugin from "@fullcalendar/react/daygrid";
 import { Link } from "react-router";
 import type { Deadline } from "../types";
-import AddEventModal from "../components/AddEventModal";
+import EventFormModal from "../components/EventFormModal";
 import Countdown from "../components/Countdown";
 import CountUp from "../components/CountUp";
 import CrunchStrip from "../components/CrunchStrip";
 import DeadlineModal from "../components/DeadlineModal";
 import Modal from "../components/Modal";
+import Reminders from "../components/Reminders";
 import {
   IconArrowRight, IconClock, IconDownload, IconFlame, IconPlus, IconSparkles, IconTarget, IconTrash,
 } from "../components/Icons";
@@ -26,12 +27,14 @@ import "../styles/calendar.css";
 type Props = {
   deadlines: Deadline[];
   onAdd: (items: Deadline[]) => void;
+  onSave: (changes: Deadline) => void;
+  onDelete: (id: number) => void;
   onClear: () => void;
 };
 
 const cssVars = (vars: Record<string, string | number>) => vars as CSSProperties;
 
-export default function CalendarPage({ deadlines, onAdd, onClear }: Props) {
+export default function CalendarPage({ deadlines, onAdd, onSave, onDelete, onClear }: Props) {
   const [hidden, setHidden] = useState<string[]>([]);
   const [selected, setSelected] = useState<Deadline | null>(null);
   const [confirmingClear, setConfirmingClear] = useState(false);
@@ -43,7 +46,7 @@ export default function CalendarPage({ deadlines, onAdd, onClear }: Props) {
   // Today's date as YYYY-MM-DD in your local time zone
   const today = todayISO();
   const visible = deadlines.filter((d) => !hidden.includes(d.course));
-  const ahead = visible.filter((d) => d.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+  const ahead = visible.filter((d) => d.date >= today && !d.done).sort((a, b) => a.date.localeCompare(b.date));
   const upcoming = ahead.slice(0, 5);
   const next = ahead[0];
   const thisWeek = ahead.filter((d) => daysBetween(today, d.date) < 7).length;
@@ -61,7 +64,9 @@ export default function CalendarPage({ deadlines, onAdd, onClear }: Props) {
     setHidden((prev) => (prev.includes(course) ? prev.filter((c) => c !== course) : [...prev, course]));
   }
 
-  const addEventModal = adding && <AddEventModal courses={courses} onAdd={onAdd} onClose={() => setAdding(false)} />;
+  const addEventModal = adding && (
+    <EventFormModal courses={courses} onSubmit={(item) => onAdd([item])} onClose={() => setAdding(false)} />
+  );
 
   if (deadlines.length === 0) {
     return (
@@ -147,6 +152,13 @@ export default function CalendarPage({ deadlines, onAdd, onClear }: Props) {
         )}
       </div>
 
+      <Reminders
+        deadlines={visible}
+        colorFor={colorFor}
+        onOpen={setSelected}
+        onDone={(d) => onSave({ ...d, done: true })}
+      />
+
       <div className="bento">
         <section className="card next-card reveal" style={cssVars({ "--i": 2 })}>
           <span className="next-ring" aria-hidden="true" />
@@ -225,7 +237,10 @@ export default function CalendarPage({ deadlines, onAdd, onClear }: Props) {
             eventClass="cal-event"
             dayCellClass={(arg) => (arg.isToday ? "cal-today" : undefined)}
             eventContent={(arg) => (
-              <span className="ev-pill" style={cssVars({ "--c": arg.event.color })}>
+              <span
+                className={`ev-pill${arg.event.extendedProps.deadline.done ? " is-done" : ""}`}
+                style={cssVars({ "--c": arg.event.color })}
+              >
                 <i className="ev-dot" />
                 <span className="ev-text">{arg.event.title}</span>
               </span>
@@ -280,7 +295,14 @@ export default function CalendarPage({ deadlines, onAdd, onClear }: Props) {
       </div>
 
       {selected && (
-        <DeadlineModal deadline={selected} color={colorFor(selected.course)} onClose={() => setSelected(null)} />
+        <DeadlineModal
+          deadline={selected}
+          color={colorFor(selected.course)}
+          courses={courses}
+          onSave={onSave}
+          onDelete={() => selected.id && onDelete(selected.id)}
+          onClose={() => setSelected(null)}
+        />
       )}
 
       {addEventModal}
