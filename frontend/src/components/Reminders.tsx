@@ -60,7 +60,7 @@ export default function Reminders({ deadlines, colorFor, onOpen, onDone }: Props
                 </span>
                 <span className={`when${days <= 1 ? " when-hot" : ""}`}>{relativeLabel(days)}</span>
               </button>
-              <button className="icon-btn" onClick={() => onDone(d)} aria-label={`Mark ${d.title} done`} title="Mark done">
+              <button className="icon-btn icon-btn-done" onClick={() => onDone(d)} aria-label={`Mark ${d.title} done`} title="Mark done">
                 <IconCheck />
               </button>
             </li>

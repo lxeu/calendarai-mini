@@ -1,5 +1,6 @@
 import { useEffect, useId, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import HeroDemo from "../components/HeroDemo";
 import Logo from "../components/Logo";
 import { IconAlert, IconCheck, IconEye, IconEyeOff, IconGoogle, IconInfo } from "../components/Icons";
 
@@ -78,11 +79,12 @@ export default function LoginPage() {
           Upload a course syllabus and CalendarAI Mini finds the assignments, labs, quizzes and exams in it. You check
           each date before it's saved.
         </p>
+        <HeroDemo />
         <ul className="facts">
           {[
             "Reads PDFs and pasted text",
             "Nothing is added until you confirm it",
-            "Exports to Google, Apple and Outlook Calendar",
+            "Exports to Google, Apple and Outlook",
             "Find a study buddy in the same course",
           ].map((fact) => (
             <li key={fact}>
