@@ -3,7 +3,7 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabaseClient";
 import type { Deadline, StudyMatch, StudyMessage } from "../types";
 import Modal from "../components/Modal";
-import { IconPlus, IconSend, IconUsers, IconX } from "../components/Icons";
+import { IconSend, IconUsers, IconX } from "../components/Icons";
 import { PERSONAL, courseColor, listCourses, normalizeCourse } from "../lib/courses";
 import { toast } from "../lib/toast";
 
@@ -52,7 +52,7 @@ export default function StudyBuddyPage({ session, deadlines }: Props) {
       .on("postgres_changes", { event: "*", schema: "public", table: "study_matches" }, (payload) => {
         if (payload.eventType === "INSERT") {
           const m = payload.new as StudyMatch;
-          if (m.user_b === me) toast(`Matched with ${m.user_a_name} for ${m.course}!`, "success");
+          if (m.user_b === me) toast(`Matched with ${m.user_a_name} for ${m.course}`, "success");
         }
         refresh();
       })
@@ -86,10 +86,10 @@ export default function StudyBuddyPage({ session, deadlines }: Props) {
     const match = data as StudyMatch | null;
     // rpc returns a row of nulls rather than null when the function returns null
     if (match?.id) {
-      toast(`Matched with ${partner(match, me).name} for ${match.course}!`, "success");
+      toast(`Matched with ${partner(match, me).name} for ${match.course}`, "success");
       setOpenId(match.id);
     } else {
-      toast(`You're in the queue for ${course}. We'll match you when someone else joins.`, "info");
+      toast(`Waiting for a match in ${course}. You'll be paired when someone else joins.`, "info");
     }
     refresh();
   }
@@ -121,61 +121,53 @@ export default function StudyBuddyPage({ session, deadlines }: Props) {
 
   return (
     <div className="buddy-page">
-      <header className="page-head reveal">
-        <span className="eyebrow">
-          <IconUsers size={14} /> Study buddy
-        </span>
-        <h1 className="page-title">
-          Study <span className="serif-accent">together</span>
-        </h1>
-        <p className="page-sub">
-          Pick a course and we'll pair you with another student in it who's also looking. Then just say hi.
-        </p>
+      <header className="page-head">
+        <div>
+          <h1 className="page-title">Study buddy</h1>
+          <p className="muted page-sub">
+            Get paired with another student in one of your courses who's also looking, then message them here.
+          </p>
+        </div>
       </header>
 
       <div className="buddy-grid">
-        <section className="card reveal" style={cssVars({ "--i": 1 })}>
-          <div className="card-head">
-            <div>
-              <h3 className="card-title">Your courses</h3>
-              <p className="card-sub">One buddy per course</p>
-            </div>
+        <section className="panel buddy-courses" aria-label="Your courses">
+          <div className="section-head">
+            <h2 className="section-title">Your courses</h2>
+            <span className="muted">One buddy per course</span>
           </div>
 
-          {courses.length === 0 && <p className="card-sub">Add a syllabus, or type a course below.</p>}
+          {courses.length === 0 && <p className="muted">No courses yet. Add a syllabus, or enter a course below.</p>}
 
-          <ul className="buddy-list">
+          <ul className="rows">
             {courses.map((course) => {
               const match = matches.find((m) => m.course === course);
               const isWaiting = waiting.includes(course);
               return (
-                <li key={course} className="buddy-row" style={cssVars({ "--c": colorFor(course) })}>
-                  <span className="course-chip" style={cssVars({ "--c": colorFor(course) })}>
-                    <i />
-                    {course}
+                <li key={course} className={`row buddy-row${match && openId === match.id ? " is-open" : ""}`} style={cssVars({ "--c": colorFor(course) })}>
+                  <span className="row-text">
+                    <span className="row-title">
+                      <i className="dot" /> {course}
+                    </span>
                   </span>
-                  <span className="rv-spacer" />
                   {match ? (
-                    <button
-                      className={`btn btn-sm ${openId === match.id ? "btn-primary" : "btn-ghost"}`}
-                      onClick={() => setOpenId(match.id)}
-                    >
-                      <Avatar name={partner(match, me).name} url={partner(match, me).avatar} size={20} />
+                    <button className="btn btn-sm" onClick={() => setOpenId(match.id)} aria-pressed={openId === match.id}>
+                      <Avatar name={partner(match, me).name} url={partner(match, me).avatar} size={16} />
                       {partner(match, me).name.split(" ")[0]}
                     </button>
                   ) : isWaiting ? (
                     <>
-                      <span className="buddy-waiting">
-                        <span className="live-dot" /> Searching…
+                      <span className="muted buddy-waiting">
+                        <span className="spinner" /> Waiting for a match
                       </span>
-                      <button className="icon-btn" onClick={() => cancel(course)} aria-label={`Stop searching in ${course}`}>
-                        <IconX size={16} />
+                      <button className="icon-btn" onClick={() => cancel(course)} aria-label={`Stop searching in ${course}`} title="Stop searching">
+                        <IconX />
                       </button>
                     </>
                   ) : (
-                    <button className="btn btn-ghost btn-sm" onClick={() => findBuddy(course)} disabled={busyCourse !== null}>
-                      {busyCourse === course ? <span className="spinner" /> : <IconUsers size={15} />}
-                      Find buddy
+                    <button className="btn btn-sm" onClick={() => findBuddy(course)} disabled={busyCourse !== null}>
+                      {busyCourse === course && <span className="spinner" />}
+                      Find a buddy
                     </button>
                   )}
                 </li>
@@ -183,35 +175,33 @@ export default function StudyBuddyPage({ session, deadlines }: Props) {
             })}
           </ul>
 
-          <form className="buddy-add" onSubmit={addCourse}>
+          <form className="inline-form" onSubmit={addCourse}>
             <input
               className="input"
-              placeholder="Another course, e.g. MATH 125"
+              placeholder="Course code, e.g. MATH 125"
               value={extraCourse}
               onChange={(e) => setExtraCourse(e.target.value)}
               aria-label="Course to find a buddy in"
             />
-            <button type="submit" className="btn btn-ghost" disabled={!extraCourse.trim() || busyCourse !== null}>
-              <IconPlus size={16} /> Find
+            <button type="submit" className="btn" disabled={!extraCourse.trim() || busyCourse !== null}>
+              Find a buddy
             </button>
           </form>
         </section>
 
-        <section className="card chat-card reveal" style={cssVars({ "--i": 2 })}>
+        <section className="panel chat-panel" aria-label="Chat">
           {open ? (
             <Chat key={open.id} match={open} me={me} onUnmatch={() => unmatch(open)} />
           ) : (
             <div className="chat-empty">
-              <span className="next-empty-icon">
-                <IconUsers size={26} />
+              <span className="icon-tile">
+                <IconUsers />
               </span>
-              <h3 className="card-title">
-                {matches.length ? "Pick a buddy to chat" : "No buddies yet"}
-              </h3>
-              <p className="card-sub">
+              <h2 className="section-title">{matches.length ? "Choose a buddy" : "No matches yet"}</h2>
+              <p className="muted">
                 {matches.length
-                  ? "Your conversations open here."
-                  : "Hit “Find buddy” on a course. If nobody's waiting yet, you'll be matched with the next person who joins."}
+                  ? "Pick someone from your courses to open your conversation."
+                  : "Choose Find a buddy on a course. If no one is waiting, you'll be matched with the next person who joins."}
               </p>
             </div>
           )}
@@ -281,20 +271,20 @@ function Chat({ match, me, onUnmatch }: { match: StudyMatch; me: string; onUnmat
   return (
     <div className="chat">
       <div className="chat-head">
-        <Avatar name={other.name} url={other.avatar} size={36} />
-        <div>
-          <h3 className="card-title">{other.name}</h3>
-          <p className="card-sub">Study buddy · {match.course}</p>
+        <Avatar name={other.name} url={other.avatar} size={24} />
+        <div className="row-text">
+          <span className="row-title">{other.name}</span>
+          <span className="row-meta">{match.course}</span>
         </div>
-        <span className="rv-spacer" />
-        <button className="btn btn-danger btn-sm" onClick={() => setConfirming(true)}>
+        <span className="spacer" />
+        <button className="btn btn-sm btn-quiet btn-danger-text" onClick={() => setConfirming(true)}>
           Unmatch
         </button>
       </div>
 
       <div className="chat-list" ref={listRef} aria-live="polite">
         {messages.length === 0 && (
-          <p className="chat-hint">You're matched! Say hi and pick a time and place to study.</p>
+          <p className="chat-hint muted">No messages yet. Say hi and suggest a time and place to study.</p>
         )}
         {messages.map((m) => (
           <div key={m.id} className={`bubble${m.sender === me ? " mine" : ""}`}>
@@ -315,23 +305,20 @@ function Chat({ match, me, onUnmatch }: { match: StudyMatch; me: string; onUnmat
           autoFocus
         />
         <button type="submit" className="btn btn-primary" disabled={!draft.trim()} aria-label="Send">
-          <IconSend size={16} />
+          <IconSend />
         </button>
       </form>
 
       {confirming && (
         <Modal label="Unmatch" onClose={() => setConfirming(false)} className="confirm-modal">
-          <span className="confirm-icon">
-            <IconX size={22} />
-          </span>
-          <h2>Unmatch with {other.name}?</h2>
-          <p>The chat closes for both of you, and you won't be paired again in {match.course}.</p>
-          <div className="dm-actions">
-            <button className="btn btn-ghost" onClick={() => setConfirming(false)} autoFocus>
+          <h2 className="modal-title">Unmatch with {other.name}?</h2>
+          <p className="muted">The chat closes for both of you, and you won't be paired again in {match.course}.</p>
+          <div className="modal-actions">
+            <button className="btn" onClick={() => setConfirming(false)} autoFocus>
               Cancel
             </button>
             <button
-              className="btn btn-danger-solid"
+              className="btn btn-danger"
               onClick={() => {
                 setConfirming(false);
                 onUnmatch();

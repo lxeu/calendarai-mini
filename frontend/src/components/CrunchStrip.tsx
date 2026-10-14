@@ -24,22 +24,18 @@ export default function CrunchStrip({ deadlines, today, colorFor }: Props) {
 
   return (
     <div className="crunch">
-      <div className="card-head">
-        <div>
-          <h3 className="card-title">Next 14 days</h3>
-          <p className="card-sub">
-            {total > 0
-              ? `${total} deadline${total === 1 ? "" : "s"} · busiest day ${days[peak].f.label}`
-              : "Nothing due in the next two weeks."}
-          </p>
-        </div>
+      <div className="section-head">
+        <h3 className="section-title">Next 14 days</h3>
+        <span className="muted">
+          {total > 0 ? `${total} due · busiest ${days[peak].f.label}` : "Nothing due"}
+        </span>
       </div>
 
       <div className="crunch-plot" role="list" aria-label="Deadlines per day for the next 14 days">
         {days.map((d) => {
           const n = d.items.length;
           const pct = max ? (n / max) * 100 : 0;
-          const edge = d.i < 2 ? " tip-left" : d.i > DAYS - 3 ? " tip-right" : "";
+          const edge = d.i < 3 ? " tip-left" : d.i > DAYS - 4 ? " tip-right" : "";
           return (
             <div
               key={d.iso}
@@ -53,35 +49,24 @@ export default function CrunchStrip({ deadlines, today, colorFor }: Props) {
               onBlur={() => setHover(null)}
             >
               <div className="crunch-track">
-                {n > 0 && (
-                  <span className="crunch-bar" style={{ height: `${pct}%`, animationDelay: `${d.i * 40}ms` }} />
-                )}
-                {d.i === peak && (
-                  <span className="crunch-val" style={{ bottom: `${pct}%` }}>
-                    {n}
-                  </span>
-                )}
+                {n > 0 && <span className="crunch-bar" style={{ height: `${pct}%` }} />}
               </div>
-              <span className={`crunch-day${d.i === 0 ? " is-today" : ""}`}>
-                <span>{d.f.weekday.slice(0, 2)}</span>
-                <b>{d.f.day}</b>
-              </span>
+              <span className={`crunch-day${d.i === 0 ? " is-today" : ""}`}>{d.f.weekday.slice(0, 1)}</span>
 
               {hover === d.i && (
                 <div className={`crunch-tip${edge}`} role="tooltip">
                   <strong>
-                    {n} deadline{n === 1 ? "" : "s"}
+                    {d.i === 0 ? `Today, ${d.f.label}` : d.f.label} · {n} due
                   </strong>
-                  <span className="crunch-tip-date">{d.i === 0 ? `Today · ${d.f.label}` : d.f.label}</span>
                   {d.items.slice(0, 4).map((item, k) => (
                     <span className="crunch-tip-row" key={k}>
-                      <i style={{ "--c": colorFor(item.course) } as CSSProperties} />
+                      <i className="dot" style={{ "--c": colorFor(item.course) } as CSSProperties} />
                       <span>
                         {item.course}: {item.title}
                       </span>
                     </span>
                   ))}
-                  {n > 4 && <span className="crunch-tip-more">+{n - 4} more</span>}
+                  {n > 4 && <span className="muted">{n - 4} more</span>}
                 </div>
               )}
             </div>

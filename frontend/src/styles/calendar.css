@@ -1,82 +1,129 @@
-/* FullCalendar "monarch" theme, re-skinned to match the app.
+/* FullCalendar "monarch" theme mapped onto the app tokens.
    html:root beats the theme palette's plain :root no matter which loads first. */
 html:root {
-  --fc-monarch-primary: #a78bfa;
-  --fc-monarch-primary-foreground: #14082e;
-  --fc-monarch-primary-over: #b69dfb;
-  --fc-monarch-primary-down: #c4b0fc;
+  --fc-monarch-primary: var(--ink);
+  --fc-monarch-primary-foreground: var(--surface);
+  --fc-monarch-primary-over: var(--ink-hover);
+  --fc-monarch-primary-down: var(--ink-hover);
 
-  --fc-monarch-secondary: rgba(255, 255, 255, 0.06);
-  --fc-monarch-secondary-foreground: #ece9ff;
-  --fc-monarch-secondary-over: rgba(255, 255, 255, 0.1);
-  --fc-monarch-secondary-down: rgba(255, 255, 255, 0.14);
+  --fc-monarch-secondary: var(--surface);
+  --fc-monarch-secondary-foreground: var(--ink);
+  --fc-monarch-secondary-over: var(--subtle);
+  --fc-monarch-secondary-down: var(--border);
 
-  --fc-monarch-tertiary: #f0abfc;
-  --fc-monarch-tertiary-foreground: #2e0a33;
-  --fc-monarch-tertiary-over: #f3bdfc;
-  --fc-monarch-tertiary-down: #f5cdfd;
+  --fc-monarch-tertiary: var(--accent);
+  --fc-monarch-tertiary-foreground: var(--surface);
+  --fc-monarch-tertiary-over: var(--accent);
+  --fc-monarch-tertiary-down: var(--accent);
 
-  --fc-monarch-event: #a78bfa;
-  --fc-monarch-event-contrast: #14082e;
-  --fc-monarch-highlight: rgba(167, 139, 250, 0.12);
-  --fc-monarch-now: #f472b6;
+  --fc-monarch-event: var(--ink-3);
+  --fc-monarch-event-contrast: var(--surface);
+  --fc-monarch-highlight: var(--accent-subtle);
+  --fc-monarch-now: var(--accent);
 
-  --fc-monarch-selected: rgba(167, 139, 250, 0.22);
-  --fc-monarch-selected-foreground: #f2f0ff;
-  --fc-monarch-selected-over: rgba(167, 139, 250, 0.3);
-  --fc-monarch-selected-down: rgba(167, 139, 250, 0.36);
-  --fc-monarch-outline: #c4b5fd;
+  --fc-monarch-selected: var(--subtle);
+  --fc-monarch-selected-foreground: var(--ink);
+  --fc-monarch-selected-over: var(--border);
+  --fc-monarch-selected-down: var(--border);
+  --fc-monarch-outline: var(--accent);
 
-  --fc-monarch-popover: #16132c;
-  --fc-monarch-popover-foreground: #f2f0ff;
+  --fc-monarch-popover: var(--surface);
+  --fc-monarch-popover-foreground: var(--ink);
 
   --fc-monarch-background: transparent;
-  --fc-monarch-faint: rgba(255, 255, 255, 0.025);
-  --fc-monarch-muted: rgba(255, 255, 255, 0.05);
-  --fc-monarch-strong: rgba(255, 255, 255, 0.1);
-  --fc-monarch-stronger: rgba(255, 255, 255, 0.14);
-  --fc-monarch-strongest: rgba(255, 255, 255, 0.18);
+  --fc-monarch-faint: var(--bg);
+  --fc-monarch-muted: var(--subtle);
+  --fc-monarch-strong: var(--border);
+  --fc-monarch-stronger: var(--border-strong);
+  --fc-monarch-strongest: var(--ink-3);
 
-  --fc-monarch-foreground: #f2f0ff;
-  --fc-monarch-faint-foreground: #5d5982;
-  --fc-monarch-muted-foreground: #a9a5cb;
+  --fc-monarch-foreground: var(--ink);
+  --fc-monarch-faint-foreground: var(--ink-3);
+  --fc-monarch-muted-foreground: var(--ink-2);
 
-  --fc-monarch-border: rgba(255, 255, 255, 0.07);
-  --fc-monarch-strong-border: rgba(255, 255, 255, 0.14);
+  --fc-monarch-border: var(--border);
+  --fc-monarch-strong-border: var(--border-strong);
 }
 
-/* ---------- Events: glowing pills in the course color ---------- */
+/* Keep the grid on the app's type scale and radius (the theme uses its own) */
+.cal-panel * {
+  font-size: var(--text-sm);
+}
+.cal-panel [role="heading"] {
+  font: 600 var(--text-lg) / 1.3 var(--font-heading);
+}
+.cal-panel button {
+  min-height: 0;
+  height: var(--control);
+  padding-block: 0;
+  border-radius: var(--radius);
+  font-size: var(--text-md);
+}
+.cal-panel a {
+  border-radius: var(--radius);
+}
+
+/* Toolbar: title on the left, controls on the right, no extra inset */
+.cal-panel > div > div:first-child {
+  padding: 0 0 var(--space-3);
+}
+.cal-panel button:not(:disabled):hover {
+  background: var(--subtle);
+}
+
+/* Weekday headers and day numbers sit top-left, like a paper planner */
+/* the skeleton centers header cells with !important, so this has to match it */
+.cal-panel [role="columnheader"],
+.cal-panel [role="columnheader"] * {
+  justify-content: flex-start;
+  align-items: flex-start !important;
+  text-align: left;
+  text-transform: none;
+}
+.cal-panel [role="columnheader"] > div {
+  padding: var(--space-2) var(--space-3) var(--space-1);
+  color: var(--ink-3);
+  font-weight: 500;
+}
+.cal-panel [role="gridcell"] > div:first-child {
+  justify-content: flex-start;
+  padding: 6px var(--space-2) 2px;
+}
+.cal-panel [role="gridcell"] > div:first-child > div {
+  height: 22px;
+  color: var(--ink-2);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 22px;
+}
+
+/* ---------- Events: a tinted bar in the course color ---------- */
 .cal-event {
   background: transparent !important;
   border-color: transparent !important;
   box-shadow: none !important;
 }
 .ev-pill {
-  --c: #a78bfa;
+  --c: var(--ink-3);
   display: flex;
   align-items: center;
-  gap: 6px;
   width: 100%;
   min-width: 0;
-  padding: 2px 8px 2px 7px;
-  border-radius: 8px;
-  background: color-mix(in oklab, var(--c) 22%, transparent);
+  padding: 1px 6px;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--c) 12%, var(--surface));
   box-shadow: inset 2px 0 0 var(--c);
   color: var(--ink);
-  font: 600 12px/1.4 var(--sans);
-  transition: background 0.2s, transform 0.2s var(--ease);
+  font-weight: 500;
+  line-height: 1.5;
 }
 .ev-pill:hover {
-  background: color-mix(in oklab, var(--c) 36%, transparent);
-  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--c) 20%, var(--surface));
 }
-.ev-dot {
-  width: 6px;
-  height: 6px;
-  flex: none;
-  border-radius: 50%;
-  background: var(--c);
-  box-shadow: 0 0 8px var(--c);
+.ev-pill.is-done {
+  color: var(--ink-3);
+  text-decoration: line-through;
+  background: var(--subtle);
 }
 .ev-text {
   min-width: 0;
@@ -87,14 +134,22 @@ html:root {
 
 /* ---------- Today ---------- */
 .cal-today {
-  background: radial-gradient(120% 90% at 50% 0%, rgba(167, 139, 250, 0.16), transparent 70%);
+  background: color-mix(in srgb, var(--accent-subtle) 50%, transparent);
+}
+.cal-panel .cal-today > div:first-child > div {
+  margin-left: -2px;
+  padding: 0 6px;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--surface);
 }
 
-/* Phones: day cells are too narrow for titles, so events become tappable dots */
+/* Phones: day cells are too narrow for titles, so events become tappable color bars */
 @media (max-width: 600px) {
   .ev-pill {
-    justify-content: center;
-    padding: 3px 0;
+    height: 6px;
+    padding: 0;
+    background: var(--c);
     box-shadow: none;
   }
   .ev-text {
@@ -104,8 +159,7 @@ html:root {
 
 /* "+N more" popover (FullCalendar renders it straight into <body>) */
 body > [role="dialog"] {
-  border-radius: 14px;
-  border-color: var(--border-2);
-  box-shadow: 0 24px 60px -16px rgba(0, 0, 0, 0.85), 0 0 40px -12px rgba(139, 92, 246, 0.45);
-  animation: pop-in 0.3s var(--spring) both;
+  border-radius: var(--radius);
+  border-color: var(--border);
+  box-shadow: var(--shadow-float);
 }

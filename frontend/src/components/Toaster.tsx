@@ -11,7 +11,7 @@ export default function Toaster() {
 
   function dismiss(id: number) {
     setItems((prev) => prev.map((t) => (t.id === id ? { ...t, leaving: true } : t)));
-    setTimeout(() => setItems((prev) => prev.filter((t) => t.id !== id)), 320);
+    setTimeout(() => setItems((prev) => prev.filter((t) => t.id !== id)), 160);
   }
 
   useEffect(
@@ -19,7 +19,7 @@ export default function Toaster() {
       subscribeToasts((t) => {
         setItems((prev) => [...prev.slice(-3), t]);
         setTimeout(() => setItems((prev) => prev.map((x) => (x.id === t.id ? { ...x, leaving: true } : x))), LIFETIME);
-        setTimeout(() => setItems((prev) => prev.filter((x) => x.id !== t.id)), LIFETIME + 320);
+        setTimeout(() => setItems((prev) => prev.filter((x) => x.id !== t.id)), LIFETIME + 160);
       }),
     [],
   );
@@ -32,10 +32,9 @@ export default function Toaster() {
             {t.kind === "success" ? <IconCheck /> : t.kind === "error" ? <IconAlert /> : <IconInfo />}
           </span>
           <span className="toast-msg">{t.message}</span>
-          <button className="toast-close" onClick={() => dismiss(t.id)} aria-label="Dismiss">
+          <button className="icon-btn toast-close" onClick={() => dismiss(t.id)} aria-label="Dismiss">
             <IconX size={14} />
           </button>
-          <i className="toast-timer" style={{ animationDuration: `${LIFETIME}ms` }} />
         </div>
       ))}
     </div>
