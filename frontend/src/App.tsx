@@ -31,16 +31,15 @@ export default function App() {
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
+      // Signed out: drop the previous user's deadlines
+      if (!newSession) setDeadlines([]);
     });
     return () => listener.subscription.unsubscribe();
   }, []);
 
   // Whenever the logged-in user changes, load their deadlines from the database
   useEffect(() => {
-    if (!session) {
-      setDeadlines([]);
-      return;
-    }
+    if (!session) return;
     supabase
       .from("deadlines")
       .select()

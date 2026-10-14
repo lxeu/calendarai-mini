@@ -49,7 +49,7 @@ export default function CrunchStrip({ deadlines, today, colorFor }: Props) {
               onBlur={() => setHover(null)}
             >
               <div className="crunch-track">
-                {n > 0 && <span className="crunch-bar" style={{ height: `${pct}%` }} />}
+                {n > 0 && <span className="crunch-bar" style={{ height: `${pct}%`, "--i": d.i } as CSSProperties} />}
               </div>
               <span className={`crunch-day${d.i === 0 ? " is-today" : ""}`}>{d.f.weekday.slice(0, 1)}</span>
 

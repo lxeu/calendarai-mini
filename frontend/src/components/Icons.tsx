@@ -1,6 +1,6 @@
 import {
   ArrowRight, Bell, Calendar, Check, CheckCheck, CornerDownLeft, Download, ExternalLink, Eye, EyeOff, FilePlus,
-  Info, LogOut, Plus, Search, Send, Trash, TriangleAlert, Upload, Users, X, Pencil,
+  FileText, Info, LogOut, Plus, Search, Send, Trash, TriangleAlert, Upload, Users, X, Pencil,
   type LucideProps,
 } from "lucide-react";
 
@@ -17,6 +17,7 @@ export const IconDownload = (p: LucideProps) => <Download {...base} {...p} />;
 export const IconExternal = (p: LucideProps) => <ExternalLink {...base} {...p} />;
 export const IconEye = (p: LucideProps) => <Eye {...base} {...p} />;
 export const IconEyeOff = (p: LucideProps) => <EyeOff {...base} {...p} />;
+export const IconFile = (p: LucideProps) => <FileText {...base} {...p} />;
 export const IconFilePlus = (p: LucideProps) => <FilePlus {...base} {...p} />;
 export const IconInfo = (p: LucideProps) => <Info {...base} {...p} />;
 export const IconLogout = (p: LucideProps) => <LogOut {...base} {...p} />;
