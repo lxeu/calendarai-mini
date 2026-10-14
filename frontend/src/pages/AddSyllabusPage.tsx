@@ -1,13 +1,12 @@
 import { supabase } from "../lib/supabaseClient";
-import { useRef, useState, type CSSProperties, type DragEvent } from "react";
+import { useRef, useState, type DragEvent } from "react";
 import { useNavigate } from "react-router";
 import { API, type Deadline, type ParseResponse, type SharedSyllabus } from "../types";
 import ReviewPopup from "../components/ReviewPopup";
 import SharedSyllabi from "../components/SharedSyllabi";
 import { isPersonal, normalizeCourse } from "../lib/courses";
 import { toast } from "../lib/toast";
-import ScanLoader from "../components/ScanLoader";
-import { IconAlert, IconArrowRight, IconCalendar, IconCheck, IconFile, IconSparkles, IconUpload } from "../components/Icons";
+import { IconAlert, IconArrowRight, IconUpload } from "../components/Icons";
 
 type Props = {
   userId: string;
@@ -73,7 +72,7 @@ export default function AddSyllabusPage({ userId, deadlines, onAdd }: Props) {
       }
       setSyllabus("");
     } catch {
-      setError("Couldn't reach the backend. Is it running?");
+      setError("Couldn't reach the server. Check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -109,7 +108,7 @@ export default function AddSyllabusPage({ userId, deadlines, onAdd }: Props) {
   // Drag-and-drop accepts any file, so check it's a PDF before uploading
   function handleFile(file: File) {
     if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-      setError("That file isn't a PDF. Try a .pdf file, or paste the text instead.");
+      setError("That file isn't a PDF. Upload a .pdf, or paste the text instead.");
       return;
     }
     parsePdf(file);
@@ -156,25 +155,21 @@ export default function AddSyllabusPage({ userId, deadlines, onAdd }: Props) {
 
   return (
     <div className="add-page">
-      <header className="page-head reveal">
-        <span className="eyebrow">
-          <IconSparkles size={14} /> AI deadline finder
-        </span>
-        <h1 className="page-title">
-          Add a <span className="serif-accent">syllabus</span>
-        </h1>
-        <p className="page-sub">
-          Upload the PDF or paste the text. I'll pull out every assignment, lab, quiz and exam, and you check
-          each one before it lands on your calendar.
-        </p>
+      <header className="page-head">
+        <div>
+          <h1 className="page-title">Add syllabus</h1>
+          <p className="muted page-sub">
+            Upload a PDF or paste the text. Assignments, labs, quizzes and exams are pulled out, and you review each one
+            before it's added to your calendar.
+          </p>
+        </div>
       </header>
 
       <SharedSyllabi userId={userId} disabled={loading || pending.length > 0} onUse={addShared} />
 
       <div className="add-grid">
         <label
-          className={`dropzone card glow reveal${dragging ? " is-drag" : ""}${loading ? " is-disabled" : ""}`}
-          style={{ "--i": 1 } as CSSProperties}
+          className={`panel dropzone${dragging ? " is-drag" : ""}${loading ? " is-disabled" : ""}`}
           onDragEnter={(e) => {
             e.preventDefault();
             if (!loading) setDragging(true);
@@ -196,42 +191,40 @@ export default function AddSyllabusPage({ userId, deadlines, onAdd }: Props) {
               e.target.value = "";
             }}
           />
-          <span className="dz-border" aria-hidden="true" />
-          <span className="dz-icon">
-            <IconUpload size={30} />
+          <span className="icon-tile">
+            <IconUpload />
           </span>
-          <span className="dz-title">{dragging ? "Let go to upload" : "Drop your PDF here"}</span>
-          <span className="dz-sub">
-            or <span className="dz-link">browse your files</span>
+          <span className="dz-title">{dragging ? "Drop to upload" : "Upload a PDF"}</span>
+          <span className="muted">
+            Drag it here or <span className="dz-link">choose a file</span>
           </span>
-          <span className="dz-hint">
-            <IconFile size={14} /> Works with PDFs that have selectable text
-          </span>
+          <span className="dz-hint muted">The PDF needs selectable text. Scanned pages won't work.</span>
         </label>
 
-        <div className="paste-card card glow reveal" style={{ "--i": 2 } as CSSProperties}>
-          <div className="card-head">
-            <div>
-              <h3 className="card-title">Or paste the text</h3>
-              <p className="card-sub">Schedules, assignment lists, anything with dates.</p>
-            </div>
-            <span className="char-count">{syllabus.length.toLocaleString()} chars</span>
+        <div className="panel paste">
+          <div className="section-head">
+            <label className="section-title" htmlFor="syllabus-text">
+              Paste text
+            </label>
+            <span className="muted tabular">{syllabus.length.toLocaleString()} characters</span>
           </div>
           <textarea
-            className="paste-area"
+            id="syllabus-text"
+            className="input paste-area"
             value={syllabus}
             onChange={(e) => setSyllabus(e.target.value)}
-            placeholder="Paste syllabus text here"
+            placeholder="Paste the schedule or assignment list from your syllabus"
             rows={9}
-            aria-label="Syllabus text"
           />
           <div className="paste-foot">
-            <button className="btn btn-primary btn-lg" onClick={parseText} disabled={loading || !syllabus}>
+            <button className="btn btn-primary" onClick={parseText} disabled={loading || !syllabus}>
               {loading ? (
-                "Reading syllabus..."
+                <>
+                  <span className="spinner" /> Finding deadlines
+                </>
               ) : (
                 <>
-                  Find deadlines <IconArrowRight size={18} />
+                  Find deadlines <IconArrowRight />
                 </>
               )}
             </button>
@@ -239,58 +232,43 @@ export default function AddSyllabusPage({ userId, deadlines, onAdd }: Props) {
         </div>
 
         {loading && (
-          <div className="scan-overlay">
-            <ScanLoader />
+          <div className="busy-overlay" role="status" aria-live="polite">
+            <span className="spinner" />
+            <div>
+              <p className="section-title">Reading your syllabus</p>
+              <p className="muted">Finding assignments, labs, quizzes and exams. Long syllabi take longer.</p>
+            </div>
           </div>
         )}
       </div>
 
-      <label className="switch reveal" style={{ "--i": 3 } as CSSProperties}>
-        <input type="checkbox" checked={autoAdd} onChange={(e) => setAutoAdd(e.target.checked)} />
-        <span className="switch-track" aria-hidden="true">
-          <span className="switch-thumb" />
-        </span>
-        <span className="switch-text">
-          <b>Skip review and add everything automatically</b>
-          <span>Deadlines go straight onto your calendar without the check step.</span>
-        </span>
-      </label>
-
-      <label className="switch reveal" style={{ "--i": 3 } as CSSProperties}>
-        <input type="checkbox" checked={share} onChange={(e) => setShare(e.target.checked)} />
-        <span className="switch-track" aria-hidden="true">
-          <span className="switch-thumb" />
-        </span>
-        <span className="switch-text">
-          <b>Share with classmates</b>
-          <span>
-            Once you've reviewed them, your course deadlines become searchable for other students in the course.
-            Only the deadlines are shared, never your name or email.
-          </span>
-        </span>
-      </label>
-
       {error && (
         <div className="notice notice-error" role="alert">
-          <IconAlert size={18} />
+          <IconAlert />
           <span>{error}</span>
         </div>
       )}
 
-      <ol className="how reveal" style={{ "--i": 4 } as CSSProperties}>
-        <li>
-          <span className="how-icon"><IconUpload size={16} /></span>
-          <span><b>Upload</b>PDF or pasted text</span>
-        </li>
-        <li>
-          <span className="how-icon"><IconCheck size={16} /></span>
-          <span><b>Review</b>Fix anything the AI got wrong</span>
-        </li>
-        <li>
-          <span className="how-icon"><IconCalendar size={16} /></span>
-          <span><b>Done</b>Every deadline on one calendar</span>
-        </li>
-      </ol>
+      <fieldset className="options">
+        <legend className="section-title">Options</legend>
+        <label className="option">
+          <input type="checkbox" checked={autoAdd} onChange={(e) => setAutoAdd(e.target.checked)} />
+          <span>
+            <span className="option-label">Add without reviewing</span>
+            <span className="muted">Every deadline found goes straight onto your calendar.</span>
+          </span>
+        </label>
+        <label className="option">
+          <input type="checkbox" checked={share} onChange={(e) => setShare(e.target.checked)} />
+          <span>
+            <span className="option-label">Share with classmates</span>
+            <span className="muted">
+              After you review them, the course's deadlines become searchable by other students in it. Your name and
+              email are never shared.
+            </span>
+          </span>
+        </label>
+      </fieldset>
 
       {pending.length > 0 && (
         <ReviewPopup

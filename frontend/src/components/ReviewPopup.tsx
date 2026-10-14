@@ -1,12 +1,12 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { Deadline } from "../types";
 import Modal from "./Modal";
-import { IconCheck, IconChecks, IconSparkles, IconTrash } from "./Icons";
+import { IconChecks, IconTrash } from "./Icons";
 import { prefersReducedMotion } from "../lib/motion";
 import { modKey } from "../lib/platform";
 
 const CATEGORIES = ["assignment", "lab", "quiz", "midterm", "final", "other"];
-const EXIT_MS = 280;
+const EXIT_MS = 160;
 
 type Props = {
   pending: Deadline[];
@@ -29,7 +29,7 @@ export default function ReviewPopup({ pending, instructor, onInstructorChange, o
   const total = Math.max(startCount, pending.length);
   const reviewed = total - pending.length;
 
-  // Let the card fly off screen before the next one slides in
+  // Let the card fade out before the next one appears
   function leave(kind: "confirm" | "delete", action: () => void) {
     if (leaving) return;
     if (prefersReducedMotion()) return action();
@@ -54,88 +54,79 @@ export default function ReviewPopup({ pending, instructor, onInstructorChange, o
 
   return (
     <Modal label="Review deadlines" className="review" overlayClassName="overlay-review">
-      <div className="rv-stack" data-blocking-modal>
-        {pending.length > 2 && <div className="rv-ghost g2" aria-hidden="true" />}
-        {pending.length > 1 && <div className="rv-ghost g1" aria-hidden="true" />}
+      <div data-blocking-modal className={`rv-card${leaving ? ` leaving-${leaving}` : ""}`} key={reviewed}>
+        <div className="modal-head">
+          <h2 className="modal-title">Review deadline</h2>
+          <span className="muted tabular">
+            {reviewed + 1} of {total}
+          </span>
+        </div>
+        <div className="progress" aria-hidden="true">
+          <span style={{ width: `${(reviewed / total) * 100}%` }} />
+        </div>
 
-        <div key={reviewed} className={`rv-card${leaving ? ` leaving-${leaving}` : ""}`}>
-          <div className="rv-top">
-            <span className="eyebrow">
-              <IconSparkles size={14} /> Review
-            </span>
-            <span className="rv-count">
-              Deadline <b>{reviewed + 1}</b> of {total}
-            </span>
+        {instructor !== undefined && (
+          <div className="field">
+            <label htmlFor={`${id}-instructor`}>Instructors (shown to classmates)</label>
+            <input
+              id={`${id}-instructor`}
+              className="input"
+              placeholder="e.g. Dr. Beth Powell, Dr. Valerie Budd"
+              value={instructor}
+              onChange={(e) => onInstructorChange?.(e.target.value)}
+            />
           </div>
-          <div className="rv-progress" aria-hidden="true">
-            <span style={{ width: `${(reviewed / total) * 100}%` }} />
+        )}
+
+        <figure className="quote">
+          <figcaption>From the syllabus</figcaption>
+          <blockquote>{current.source}</blockquote>
+        </figure>
+
+        <fieldset className="fields" disabled={leaving !== null}>
+          <div className="field">
+            <label htmlFor={`${id}-course`}>Course</label>
+            <input id={`${id}-course`} className="input" value={current.course} onChange={(e) => onUpdate("course", e.target.value)} />
           </div>
-
-          <h2 className="rv-title">Does this look right?</h2>
-
-          {instructor !== undefined && (
-            <div className="field rv-instructor">
-              <label htmlFor={`${id}-instructor`}>Instructors (shown to classmates)</label>
-              <input
-                id={`${id}-instructor`}
-                className="input"
-                placeholder="e.g. Dr. Beth Powell, Dr. Valerie Budd"
-                value={instructor}
-                onChange={(e) => onInstructorChange?.(e.target.value)}
-              />
-            </div>
-          )}
-
-          <figure className="quote">
-            <figcaption>From your syllabus</figcaption>
-            <blockquote>{current.source}</blockquote>
-          </figure>
-
-          <fieldset className="rv-fields" disabled={leaving !== null}>
-            <div className="field">
-              <label htmlFor={`${id}-course`}>Course</label>
-              <input id={`${id}-course`} className="input" value={current.course} onChange={(e) => onUpdate("course", e.target.value)} />
-            </div>
-            <div className="field">
-              <label htmlFor={`${id}-date`}>Date</label>
-              <input id={`${id}-date`} className="input" type="date" value={current.date} onChange={(e) => onUpdate("date", e.target.value)} />
-            </div>
-            <div className="field field-wide">
-              <label htmlFor={`${id}-title`}>Title</label>
-              <input id={`${id}-title`} className="input" value={current.title} onChange={(e) => onUpdate("title", e.target.value)} />
-            </div>
-            <div className="field field-wide">
-              <span className="field-label" id={`${id}-type`}>Type</span>
-              <div className="chips" role="radiogroup" aria-labelledby={`${id}-type`}>
-                {CATEGORIES.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    role="radio"
-                    aria-checked={current.category === c}
-                    className={`chip${current.category === c ? " on" : ""}`}
-                    onClick={() => onUpdate("category", c)}
-                  >
-                    {c}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </fieldset>
-
-          <div className="rv-actions">
-            <button className="btn btn-danger" onClick={() => leave("delete", onDelete)} disabled={leaving !== null}>
-              <IconTrash size={16} /> Delete
-            </button>
-            <span className="rv-spacer" />
-            <button className="btn btn-ghost" onClick={onConfirmAll} disabled={leaving !== null}>
-              <IconChecks size={16} /> Confirm all {pending.length}
-            </button>
-            <button ref={confirmRef} className="btn btn-primary" onClick={() => leave("confirm", onConfirm)} disabled={leaving !== null}>
-              <IconCheck size={16} /> Confirm
-              <kbd className="kbd-inline">{modKey}↵</kbd>
-            </button>
+          <div className="field">
+            <label htmlFor={`${id}-date`}>Date</label>
+            <input id={`${id}-date`} className="input" type="date" value={current.date} onChange={(e) => onUpdate("date", e.target.value)} />
           </div>
+          <div className="field field-wide">
+            <label htmlFor={`${id}-title`}>Title</label>
+            <input id={`${id}-title`} className="input" value={current.title} onChange={(e) => onUpdate("title", e.target.value)} />
+          </div>
+          <div className="field field-wide">
+            <span className="field-label" id={`${id}-type`}>Type</span>
+            <div className="chips" role="radiogroup" aria-labelledby={`${id}-type`}>
+              {CATEGORIES.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  role="radio"
+                  aria-checked={current.category === c}
+                  className={`chip${current.category === c ? " on" : ""}`}
+                  onClick={() => onUpdate("category", c)}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+        </fieldset>
+
+        <div className="modal-actions">
+          <button className="btn btn-quiet btn-danger-text" onClick={() => leave("delete", onDelete)} disabled={leaving !== null}>
+            <IconTrash /> Discard
+          </button>
+          <span className="spacer" />
+          <button className="btn" onClick={onConfirmAll} disabled={leaving !== null}>
+            <IconChecks /> Add all {pending.length}
+          </button>
+          <button ref={confirmRef} className="btn btn-primary" onClick={() => leave("confirm", onConfirm)} disabled={leaving !== null}>
+            Add
+            <kbd className="kbd-inline">{modKey}↵</kbd>
+          </button>
         </div>
       </div>
     </Modal>

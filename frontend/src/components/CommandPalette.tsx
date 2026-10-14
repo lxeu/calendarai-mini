@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import Modal from "./Modal";
-import { IconCalendar, IconCornerDownLeft, IconDownload, IconLogout, IconSearch, IconSparkles } from "./Icons";
+import { IconCalendar, IconCornerDownLeft, IconDownload, IconFilePlus, IconLogout, IconSearch } from "./Icons";
 import type { Deadline } from "../types";
 import { courseColor, listCourses } from "../lib/courses";
 import { daysBetween, formatShort, relativeLabel, todayISO } from "../lib/dates";
@@ -36,9 +36,9 @@ export default function CommandPalette({ deadlines, onClose, onOpenDeadline, onE
 
   const commands: Item[] = [
     { id: "go-cal", group: "Go to", label: "Calendar", hint: "All your deadlines", icon: <IconCalendar />, run: () => navigate("/") },
-    { id: "go-add", group: "Go to", label: "Add syllabus", hint: "Upload a PDF or paste text", icon: <IconSparkles />, run: () => navigate("/add") },
+    { id: "go-add", group: "Go to", label: "Add syllabus", hint: "Upload a PDF or paste text", icon: <IconFilePlus />, run: () => navigate("/add") },
     ...(deadlines.length > 0
-      ? [{ id: "export", group: "Actions", label: "Export to calendar app (.ics)", hint: `${deadlines.length} deadlines`, icon: <IconDownload />, run: onExport }]
+      ? [{ id: "export", group: "Actions", label: "Export all as .ics", hint: `${deadlines.length} deadlines`, icon: <IconDownload />, run: onExport }]
       : []),
     { id: "sign-out", group: "Actions", label: "Sign out", icon: <IconLogout />, run: onSignOut },
   ].filter((c) => !q || has(c.label) || has(c.hint));
@@ -58,7 +58,7 @@ export default function CommandPalette({ deadlines, onClose, onOpenDeadline, onE
       group: q ? "Deadlines" : "Coming up",
       label: d.title,
       hint: `${d.course} · ${formatShort(d.date).label} · ${relativeLabel(daysBetween(today, d.date))}`,
-      icon: <span className="pal-dot" style={{ "--c": courseColor(courses, d.course) } as CSSProperties} />,
+      icon: <span className="dot" style={{ "--c": courseColor(courses, d.course) } as CSSProperties} />,
       run: () => onOpenDeadline(d),
     }));
 
@@ -77,11 +77,11 @@ export default function CommandPalette({ deadlines, onClose, onOpenDeadline, onE
   return (
     <Modal label="Search and commands" onClose={onClose} className="palette" overlayClassName="overlay-top">
       <div className="pal-search">
-        <IconSearch size={18} />
+        <IconSearch />
         <input
           autoFocus
           value={query}
-          placeholder="Search deadlines, courses, or jump somewhere…"
+          placeholder="Search deadlines and courses, or type a command"
           aria-label="Search"
           onChange={(e) => {
             setQuery(e.target.value);
@@ -105,7 +105,7 @@ export default function CommandPalette({ deadlines, onClose, onOpenDeadline, onE
       </div>
 
       <div className="pal-list" ref={listRef}>
-        {items.length === 0 && <p className="pal-empty">Nothing matches “{query}”.</p>}
+        {items.length === 0 && <p className="pal-empty">No results for “{query}”.</p>}
         {items.map((item, i) => (
           <div key={item.id}>
             {(i === 0 || items[i - 1].group !== item.group) && <p className="pal-group">{item.group}</p>}
@@ -120,7 +120,7 @@ export default function CommandPalette({ deadlines, onClose, onOpenDeadline, onE
                 <span className="pal-label">{item.label}</span>
                 {item.hint && <span className="pal-hint">{item.hint}</span>}
               </span>
-              {i === current && <IconCornerDownLeft size={15} className="pal-enter" />}
+              {i === current && <IconCornerDownLeft size={14} className="pal-enter" />}
             </button>
           </div>
         ))}

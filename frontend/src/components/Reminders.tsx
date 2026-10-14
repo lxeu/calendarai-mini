@@ -12,7 +12,7 @@ type Props = {
   onDone: (d: Deadline) => void;
 };
 
-// "Coming up" card: everything not done in the next few days, with one-tap "done"
+// "Due soon": everything not done in the next few days, with one-tap "done"
 export default function Reminders({ deadlines, colorFor, onOpen, onDone }: Props) {
   const [notify, setNotify] = useState(notificationsOn);
   const soon = dueSoon(deadlines);
@@ -25,49 +25,43 @@ export default function Reminders({ deadlines, colorFor, onOpen, onDone }: Props
     }
     setNotify(on);
     if (on) {
-      toast("You'll get a notification for anything due today or tomorrow while CalendarAI is open", "success");
+      toast("You'll be notified about anything due today or tomorrow while this tab is open", "success");
       sendDueNotifications(deadlines);
     }
   }
 
   return (
-    <section className="card reminders reveal" style={{ "--i": 2 } as CSSProperties} aria-label="Reminders">
-      <div className="card-head">
-        <div>
-          <h3 className="card-title">
-            <IconBell size={16} /> Reminders
-          </h3>
-          <p className="card-sub">
-            {soon.length
-              ? `${soon.length} due in the next ${REMIND_DAYS} days`
-              : `Nothing due in the next ${REMIND_DAYS} days. Nice.`}
-          </p>
-        </div>
+    <section className="side-section" aria-label="Due soon">
+      <div className="section-head">
+        <h3 className="section-title">Due soon</h3>
         {notificationsSupported() && (
-          <button className={`btn btn-sm ${notify ? "btn-primary" : "btn-ghost"}`} onClick={toggleNotify} aria-pressed={notify}>
-            <IconBell size={15} /> {notify ? "Notifications on" : "Notify me"}
+          <button
+            className={`btn btn-sm btn-quiet${notify ? " is-on" : ""}`}
+            onClick={toggleNotify}
+            aria-pressed={notify}
+            title={notify ? "Turn off browser notifications" : "Get a browser notification the day before"}
+          >
+            <IconBell size={14} /> {notify ? "Notifications on" : "Notify me"}
           </button>
         )}
       </div>
 
-      {soon.length > 0 && (
-        <ul className="rem-list">
+      {soon.length === 0 ? (
+        <p className="muted">Nothing due in the next {REMIND_DAYS} days.</p>
+      ) : (
+        <ul className="rows">
           {soon.map(({ d, days }) => (
-            <li
-              key={d.id}
-              className={`rem-item${days <= 1 ? " rem-hot" : ""}`}
-              style={{ "--c": colorFor(d.course) } as CSSProperties}
-            >
-              <button className="rem-main" onClick={() => onOpen(d)}>
-                <span className="rem-when">{relativeLabel(days)}</span>
-                <span className="rem-title">{d.title}</span>
-                <span className="rem-course">
-                  <i />
-                  {d.course}
+            <li key={d.id} className="row" style={{ "--c": colorFor(d.course) } as CSSProperties}>
+              <button className="row-main" onClick={() => onOpen(d)}>
+                <i className="dot" />
+                <span className="row-text">
+                  <span className="row-title">{d.title}</span>
+                  <span className="row-meta">{d.course}</span>
                 </span>
+                <span className={`when${days <= 1 ? " when-hot" : ""}`}>{relativeLabel(days)}</span>
               </button>
-              <button className="icon-btn rem-done" onClick={() => onDone(d)} aria-label={`Mark ${d.title} done`} title="Mark done">
-                <IconCheck size={16} />
+              <button className="icon-btn" onClick={() => onDone(d)} aria-label={`Mark ${d.title} done`} title="Mark done">
+                <IconCheck />
               </button>
             </li>
           ))}

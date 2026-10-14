@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { useState, type CSSProperties } from "react";
 import FullCalendar from "@fullcalendar/react";
 import themePlugin from "@fullcalendar/react/themes/monarch";
 import dayGridPlugin from "@fullcalendar/react/daygrid";
@@ -6,18 +6,14 @@ import { Link } from "react-router";
 import type { Deadline } from "../types";
 import EventFormModal from "../components/EventFormModal";
 import Countdown from "../components/Countdown";
-import CountUp from "../components/CountUp";
 import CrunchStrip from "../components/CrunchStrip";
 import DeadlineModal from "../components/DeadlineModal";
 import Modal from "../components/Modal";
 import Reminders from "../components/Reminders";
-import {
-  IconArrowRight, IconClock, IconDownload, IconFlame, IconPlus, IconSparkles, IconTarget, IconTrash,
-} from "../components/Icons";
+import { IconCalendar, IconDownload, IconFilePlus, IconPlus, IconTrash } from "../components/Icons";
 import { courseColor, listCourses } from "../lib/courses";
 import { daysBetween, formatLong, formatShort, relativeLabel, todayISO } from "../lib/dates";
 import { downloadICS } from "../lib/ics";
-import { tiltHandlers } from "../lib/motion";
 
 import "@fullcalendar/react/skeleton.css";
 import "@fullcalendar/react/themes/monarch/theme.css";
@@ -70,29 +66,31 @@ export default function CalendarPage({ deadlines, onAdd, onSave, onDelete, onCle
 
   if (deadlines.length === 0) {
     return (
-      <div className="empty">
-        <div className="empty-art reveal" aria-hidden="true">
-          <div className="empty-cal">
-            {Array.from({ length: 28 }, (_, i) => (
-              <span key={i} className={[3, 9, 12, 18, 24].includes(i) ? "on" : ""} />
-            ))}
+      <div className="cal-page">
+        <header className="page-head">
+          <div>
+            <p className="muted">{formatLong(today)}</p>
+            <h1 className="page-title">Calendar</h1>
           </div>
-          <span className="empty-orb o1" />
-          <span className="empty-orb o2" />
-          <span className="empty-orb o3" />
+        </header>
+        <div className="empty">
+          <span className="icon-tile">
+            <IconCalendar />
+          </span>
+          <h2 className="empty-title">No deadlines yet</h2>
+          <p className="muted">
+            Add a course syllabus and its assignments, labs, quizzes and exams show up here. You check each one
+            before it's saved.
+          </p>
+          <div className="empty-actions">
+            <Link to="/add" className="btn btn-primary">
+              <IconFilePlus /> Add syllabus
+            </Link>
+            <button className="btn" onClick={() => setAdding(true)}>
+              <IconPlus /> Add event manually
+            </button>
+          </div>
         </div>
-        <h2 className="page-title reveal" style={cssVars({ "--i": 1 })}>
-          No deadlines <span className="serif-accent">yet</span>
-        </h2>
-        <p className="page-sub reveal" style={cssVars({ "--i": 2 })}>
-          Drop in a syllabus and every assignment, quiz and exam shows up here in seconds.
-        </p>
-        <Link to="/add" className="btn btn-primary btn-lg reveal" style={cssVars({ "--i": 3 })}>
-          Add your first syllabus <IconArrowRight size={18} />
-        </Link>
-        <button className="link-btn reveal" style={cssVars({ "--i": 4 })} onClick={() => setAdding(true)}>
-          or add an event by hand
-        </button>
         {addEventModal}
       </div>
     );
@@ -100,46 +98,41 @@ export default function CalendarPage({ deadlines, onAdd, onSave, onDelete, onCle
 
   return (
     <div className="cal-page">
-      <header className="page-head page-head-row reveal">
+      <header className="page-head">
         <div>
-          <span className="eyebrow">
-            <span className="live-dot" /> {formatLong(today)}
-          </span>
-          <h1 className="page-title">
-            Your semester, <span className="serif-accent">at a glance</span>
-          </h1>
+          <p className="muted">{formatLong(today)}</p>
+          <h1 className="page-title">Calendar</h1>
         </div>
         <div className="head-actions">
           <button
-            className="btn btn-ghost"
+            className="btn"
             onClick={() => downloadICS(visible)}
             disabled={visible.length === 0}
-            title="Download as an .ics file for Google, Apple or Outlook Calendar"
+            title="Download an .ics file for Google, Apple or Outlook Calendar"
           >
-            <IconDownload size={16} /> Export .ics
+            <IconDownload /> Export .ics
           </button>
-          <button className="btn btn-ghost" onClick={() => setAdding(true)}>
-            <IconPlus size={16} /> Add event
+          <button className="btn" onClick={() => setAdding(true)}>
+            <IconPlus /> Add event
           </button>
           <Link to="/add" className="btn btn-primary">
-            <IconPlus size={16} /> Add syllabus
+            <IconFilePlus /> Add syllabus
           </Link>
         </div>
       </header>
 
-      <div className="filters reveal" style={cssVars({ "--i": 1 })} role="group" aria-label="Show or hide courses">
-        <span className="filters-label">Courses</span>
+      <div className="filters" role="group" aria-label="Show or hide courses">
         {courses.map((c) => {
           const on = !hidden.includes(c);
           return (
             <button
               key={c}
-              className={`course-chip toggle${on ? " on" : ""}`}
+              className={`chip course-toggle${on ? " on" : ""}`}
               style={cssVars({ "--c": colorFor(c) })}
               aria-pressed={on}
               onClick={() => toggleCourse(c)}
             >
-              <i />
+              <i className="dot" />
               {c}
               <span className="chip-count">{deadlines.filter((d) => d.course === c).length}</span>
             </button>
@@ -152,85 +145,12 @@ export default function CalendarPage({ deadlines, onAdd, onSave, onDelete, onCle
         )}
       </div>
 
-      <Reminders
-        deadlines={visible}
-        colorFor={colorFor}
-        onOpen={setSelected}
-        onDone={(d) => onSave({ ...d, done: true })}
-      />
-
-      <div className="bento">
-        <section className="card next-card reveal" style={cssVars({ "--i": 2 })}>
-          <span className="next-ring" aria-hidden="true" />
-          {next ? (
-            <>
-              <div className="next-top">
-                <span className="eyebrow">
-                  <span className="live-dot" /> Next up
-                </span>
-                <When days={daysBetween(today, next.date)} />
-              </div>
-              <div className="next-meta">
-                <span className="course-chip" style={cssVars({ "--c": colorFor(next.course) })}>
-                  <i />
-                  {next.course}
-                </span>
-                <span className="tag">{next.category}</span>
-              </div>
-              <h2 className="next-title">
-                <button className="link-reset" onClick={() => setSelected(next)}>
-                  {next.title}
-                </button>
-              </h2>
-              <p className="next-date">{formatLong(next.date)}</p>
-              <Countdown date={next.date} />
-            </>
-          ) : (
-            <div className="next-empty">
-              <span className="next-empty-icon">
-                <IconSparkles size={26} />
-              </span>
-              <h2 className="next-title">All clear</h2>
-              <p className="next-date">
-                Nothing coming up{hidden.length > 0 ? " in the courses you're showing" : ""}. Enjoy it.
-              </p>
-            </div>
-          )}
-          <div className="meter">
-            <div className="meter-head">
-              <span>Semester progress</span>
-              <span>
-                <b>{done}</b> of {visible.length} behind you
-              </span>
-            </div>
-            <div
-              className="meter-track"
-              role="progressbar"
-              aria-label="Deadlines behind you"
-              aria-valuemin={0}
-              aria-valuemax={visible.length}
-              aria-valuenow={done}
-            >
-              <span className="meter-fill" style={{ width: `${visible.length ? (done / visible.length) * 100 : 0}%` }} />
-            </div>
-          </div>
-        </section>
-
-        <div className="stats">
-          <StatTile i={3} icon={<IconTarget size={18} />} label="Upcoming" value={ahead.length} sub="deadlines ahead" />
-          <StatTile i={4} icon={<IconClock size={18} />} label="Next 7 days" value={thisWeek} sub={thisWeek === 1 ? "deadline" : "deadlines"} />
-          <StatTile i={5} icon={<IconFlame size={18} />} label="Exams ahead" value={exams} sub="midterms & finals" />
-        </div>
-
-        <section className="card crunch-card reveal" style={cssVars({ "--i": 6 })}>
-          <CrunchStrip deadlines={visible} today={today} colorFor={colorFor} />
-        </section>
-
-        <section className="card cal-card reveal" style={cssVars({ "--i": 7 })}>
+      <div className="cal-layout">
+        <section className="panel cal-panel" aria-label="Month">
           <FullCalendar
             plugins={[themePlugin, dayGridPlugin]}
             initialView="dayGridMonth"
-            headerToolbar={{ start: "prev,next today", center: "title", end: "" }}
+            headerToolbar={{ start: "title", center: "", end: "today prev,next" }}
             events={events}
             borderless
             dayMaxEvents={3}
@@ -241,7 +161,6 @@ export default function CalendarPage({ deadlines, onAdd, onSave, onDelete, onCle
                 className={`ev-pill${arg.event.extendedProps.deadline.done ? " is-done" : ""}`}
                 style={cssVars({ "--c": arg.event.color })}
               >
-                <i className="ev-dot" />
                 <span className="ev-text">{arg.event.title}</span>
               </span>
             )}
@@ -249,48 +168,117 @@ export default function CalendarPage({ deadlines, onAdd, onSave, onDelete, onCle
           />
         </section>
 
-        <aside className="card upcoming-card reveal" style={cssVars({ "--i": 8 })}>
-          <div className="card-head">
-            <div>
-              <h3 className="card-title">Upcoming</h3>
-              <p className="card-sub">
-                {ahead.length > upcoming.length ? `Next ${upcoming.length} of ${ahead.length}` : `${ahead.length} ahead`}
-              </p>
+        <aside className="panel side">
+          <section className="side-section next" aria-label="Next up">
+            <div className="section-head">
+              <h3 className="section-title">Next up</h3>
+              {next && <When days={daysBetween(today, next.date)} />}
             </div>
-          </div>
-          {upcoming.length === 0 ? (
-            <p className="card-sub">Nothing upcoming.</p>
-          ) : (
-            <ol className="timeline">
-              {upcoming.map((d, i) => {
-                const f = formatShort(d.date);
-                return (
-                  <li key={d.id ?? `new-${i}`} style={cssVars({ "--i": i })}>
-                    <button className="tl-item" style={cssVars({ "--c": colorFor(d.course) })} onClick={() => setSelected(d)}>
-                      <span className="tl-date">
-                        <span>{f.month}</span>
-                        <b>{f.day}</b>
-                      </span>
-                      <span className="tl-body">
-                        <span className="tl-course">
-                          <i />
-                          {d.course}
+            {next ? (
+              <>
+                <button className="next-title link-reset" onClick={() => setSelected(next)}>
+                  {next.title}
+                </button>
+                <p className="row-meta" style={cssVars({ "--c": colorFor(next.course) })}>
+                  <i className="dot" />
+                  <span>
+                    {next.course} · {next.category} · {formatLong(next.date)}
+                  </span>
+                </p>
+                <Countdown date={next.date} />
+              </>
+            ) : (
+              <p className="muted">
+                No upcoming deadlines{hidden.length > 0 ? " in the courses you're showing" : ""}.
+              </p>
+            )}
+          </section>
+
+          <Reminders
+            deadlines={visible}
+            colorFor={colorFor}
+            onOpen={setSelected}
+            onDone={(d) => onSave({ ...d, done: true })}
+          />
+
+          <section className="side-section" aria-label="Upcoming">
+            <div className="section-head">
+              <h3 className="section-title">Upcoming</h3>
+              <span className="muted">
+                {ahead.length > upcoming.length ? `${upcoming.length} of ${ahead.length}` : `${ahead.length}`}
+              </span>
+            </div>
+            {upcoming.length === 0 ? (
+              <p className="muted">Nothing upcoming.</p>
+            ) : (
+              <ol className="rows">
+                {upcoming.map((d, i) => {
+                  const f = formatShort(d.date);
+                  return (
+                    <li key={d.id ?? `new-${i}`} className="row" style={cssVars({ "--c": colorFor(d.course) })}>
+                      <button className="row-main" onClick={() => setSelected(d)}>
+                        <span className="row-date">
+                          {f.month} {f.day}
                         </span>
-                        <span className="tl-title">{d.title}</span>
-                      </span>
-                      <When days={daysBetween(today, d.date)} compact />
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
-          )}
+                        <span className="row-text">
+                          <span className="row-title">{d.title}</span>
+                          <span className="row-meta">
+                            <i className="dot" /> {d.course}
+                          </span>
+                        </span>
+                        <When days={daysBetween(today, d.date)} />
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+          </section>
+
+          <section className="side-section">
+            <CrunchStrip deadlines={visible} today={today} colorFor={colorFor} />
+          </section>
+
+          <section className="side-section" aria-label="Summary">
+            <dl className="stats">
+              <div>
+                <dt>Upcoming</dt>
+                <dd>{ahead.length}</dd>
+              </div>
+              <div>
+                <dt>Next 7 days</dt>
+                <dd>{thisWeek}</dd>
+              </div>
+              <div>
+                <dt>Exams ahead</dt>
+                <dd>{exams}</dd>
+              </div>
+            </dl>
+            <div className="meter">
+              <div className="meter-head">
+                <span>Done or past</span>
+                <span>
+                  {done} of {visible.length}
+                </span>
+              </div>
+              <div
+                className="meter-track"
+                role="progressbar"
+                aria-label="Deadlines behind you"
+                aria-valuemin={0}
+                aria-valuemax={visible.length}
+                aria-valuenow={done}
+              >
+                <span className="meter-fill" style={{ width: `${visible.length ? (done / visible.length) * 100 : 0}%` }} />
+              </div>
+            </div>
+          </section>
         </aside>
       </div>
 
       <div className="danger-zone">
-        <button className="btn btn-danger btn-sm" onClick={() => setConfirmingClear(true)}>
-          <IconTrash size={15} /> Clear calendar
+        <button className="btn btn-sm btn-quiet btn-danger-text" onClick={() => setConfirmingClear(true)}>
+          <IconTrash size={14} /> Clear calendar
         </button>
       </div>
 
@@ -309,25 +297,22 @@ export default function CalendarPage({ deadlines, onAdd, onSave, onDelete, onCle
 
       {confirmingClear && (
         <Modal label="Clear calendar" onClose={() => setConfirmingClear(false)} className="confirm-modal">
-          <span className="confirm-icon">
-            <IconTrash size={22} />
-          </span>
-          <h2>Clear your whole calendar?</h2>
-          <p>
+          <h2 className="modal-title">Clear your calendar?</h2>
+          <p className="muted">
             This deletes all {deadlines.length} deadline{deadlines.length === 1 ? "" : "s"}. It can't be undone.
           </p>
-          <div className="dm-actions">
-            <button className="btn btn-ghost" onClick={() => setConfirmingClear(false)} autoFocus>
+          <div className="modal-actions">
+            <button className="btn" onClick={() => setConfirmingClear(false)} autoFocus>
               Cancel
             </button>
             <button
-              className="btn btn-danger-solid"
+              className="btn btn-danger"
               onClick={() => {
                 setConfirmingClear(false);
                 onClear();
               }}
             >
-              <IconTrash size={16} /> Clear everything
+              Delete all deadlines
             </button>
           </div>
         </Modal>
@@ -336,27 +321,8 @@ export default function CalendarPage({ deadlines, onAdd, onSave, onDelete, onCle
   );
 }
 
-function StatTile({ i, icon, label, value, sub }: { i: number; icon: ReactNode; label: string; value: number; sub: string }) {
-  return (
-    <div className="card stat tilt glow reveal" style={cssVars({ "--i": i })} {...tiltHandlers}>
-      <span className="stat-icon">{icon}</span>
-      <span className="stat-label">{label}</span>
-      <span className="stat-value">
-        <CountUp value={value} />
-      </span>
-      <span className="stat-sub">{sub}</span>
-    </div>
-  );
-}
-
-// "Today" / "in 3 days" badge; due today or tomorrow gets the urgent styling
-function When({ days, compact = false }: { days: number; compact?: boolean }) {
+// "Today" / "in 3 days"; due today or tomorrow is marked urgent
+function When({ days }: { days: number }) {
   if (Number.isNaN(days)) return null;
-  const hot = days <= 1;
-  return (
-    <span className={`when${hot ? " when-hot" : days <= 3 ? " when-warm" : ""}${compact ? " when-compact" : ""}`}>
-      {hot && <IconFlame size={13} />}
-      {relativeLabel(days)}
-    </span>
-  );
+  return <span className={`when${days <= 1 ? " when-hot" : ""}`}>{relativeLabel(days)}</span>;
 }

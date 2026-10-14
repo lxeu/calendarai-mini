@@ -1,7 +1,7 @@
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import type { SharedSyllabus } from "../types";
-import { IconPlus, IconSearch, IconTrash, IconUsers } from "./Icons";
+import { IconPlus, IconSearch, IconTrash } from "./Icons";
 import { addDays, daysBetween, relativeLabel, todayISO } from "../lib/dates";
 import { toast } from "../lib/toast";
 
@@ -53,21 +53,19 @@ export default function SharedSyllabi({ userId, disabled, onUse }: Props) {
   if (results === null || (results.length === 0 && !query)) return null;
 
   return (
-    <section className="card shared reveal" style={{ "--i": 1 } as CSSProperties}>
-      <div className="card-head">
+    <section className="panel shared" aria-label="Shared by classmates">
+      <div className="section-head">
         <div>
-          <h3 className="card-title">
-            <IconUsers size={16} /> Shared by classmates
-          </h3>
-          <p className="card-sub">Someone may have already done the work. Add their deadlines and review them.</p>
+          <h2 className="section-title">Shared by classmates</h2>
+          <p className="muted">If someone already added your course, use their deadlines and review them.</p>
         </div>
       </div>
 
-      <div className="input-wrap shared-search">
-        <IconSearch size={17} />
+      <div className="input-wrap">
+        <IconSearch />
         <input
           className="input has-icon"
-          placeholder="Search a course or instructor, e.g. CMPUT 174"
+          placeholder="Course or instructor, e.g. CMPUT 174"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           aria-label="Search shared syllabi"
@@ -75,31 +73,31 @@ export default function SharedSyllabi({ userId, disabled, onUse }: Props) {
       </div>
 
       {results.length === 0 ? (
-        <p className="card-sub">Nobody has shared "{query.trim()}" yet. Upload it below and you'll be the first.</p>
+        <p className="muted">No one has shared “{query.trim()}” yet. Upload it below to be the first.</p>
       ) : (
-        <ul className="shared-list">
+        <ul className="rows">
           {results.map((s) => {
             const mine = s.uploaded_by === userId;
             const updated = daysBetween(todayISO(), s.updated_at.slice(0, 10));
             return (
-              <li key={s.id} className="shared-row">
-                <span className="course-chip">
-                  <i />
-                  {s.course}
+              <li key={s.id} className="row shared-row">
+                <span className="row-text">
+                  <span className="row-title">
+                    {s.course}
+                    {s.instructor && <span className="muted"> · {s.instructor}</span>}
+                  </span>
+                  <span className="row-meta">
+                    {s.deadlines.length} deadlines · used {s.use_count} times · updated {relativeLabel(updated).toLowerCase()}
+                    {mine && " · shared by you"}
+                  </span>
                 </span>
-                <span className="shared-meta">
-                  {s.instructor && <b className="shared-instructor">{s.instructor} · </b>}
-                  {s.deadlines.length} deadlines · used by {s.use_count} · updated {relativeLabel(updated).toLowerCase()}
-                  {mine && <b> · shared by you</b>}
-                </span>
-                <span className="rv-spacer" />
                 {mine && (
                   <button className="icon-btn" onClick={() => remove(s)} aria-label={`Stop sharing ${s.course}`} title="Stop sharing">
-                    <IconTrash size={16} />
+                    <IconTrash />
                   </button>
                 )}
-                <button className="btn btn-ghost btn-sm" onClick={() => onUse(s)} disabled={disabled}>
-                  <IconPlus size={15} /> Add
+                <button className="btn btn-sm" onClick={() => onUse(s)} disabled={disabled}>
+                  <IconPlus size={14} /> Use
                 </button>
               </li>
             );

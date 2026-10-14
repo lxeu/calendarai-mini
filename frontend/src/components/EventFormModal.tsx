@@ -1,7 +1,7 @@
 import { useId, useState, type FormEvent } from "react";
 import type { Deadline } from "../types";
 import Modal from "./Modal";
-import { IconCheck, IconPlus, IconX } from "./Icons";
+import { IconX } from "./Icons";
 import { PERSONAL, isPersonal } from "../lib/courses";
 import { todayISO } from "../lib/dates";
 
@@ -51,22 +51,24 @@ export default function EventFormModal({ courses, initial, onSubmit, onClose }: 
 
   return (
     <Modal label={initial ? "Edit event" : "Add event"} onClose={onClose}>
-      <button className="icon-btn dm-close" onClick={onClose} aria-label="Close">
-        <IconX size={18} />
-      </button>
-      <h2 className="rv-title">{initial ? "Edit event" : "Add an event"}</h2>
+      <div className="modal-head">
+        <h2 className="modal-title">{initial ? "Edit event" : "Add event"}</h2>
+        <button className="icon-btn" onClick={onClose} aria-label="Close">
+          <IconX />
+        </button>
+      </div>
 
       <form onSubmit={submit}>
-        <div className="rv-fields">
+        <div className="fields">
           <div className="field field-wide">
-            <div className="chips kind-toggle" role="radiogroup" aria-label="Kind of event">
+            <div className="segmented" role="radiogroup" aria-label="Kind of event">
               {[false, true].map((p) => (
                 <button
                   key={String(p)}
                   type="button"
                   role="radio"
                   aria-checked={personal === p}
-                  className={`chip${personal === p ? " on" : ""}`}
+                  className="segmented-option"
                   onClick={() => switchKind(p)}
                 >
                   {p ? "Personal" : "School"}
@@ -101,7 +103,7 @@ export default function EventFormModal({ courses, initial, onSubmit, onClose }: 
             <input
               id={`${id}-title`}
               className="input"
-              placeholder={personal ? "Dentist, shift at work, Sam's birthday…" : "Assignment 3"}
+              placeholder={personal ? "Dentist appointment" : "Assignment 3"}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               autoFocus
@@ -126,13 +128,12 @@ export default function EventFormModal({ courses, initial, onSubmit, onClose }: 
           </div>
         </div>
 
-        <div className="rv-actions">
-          <span className="rv-spacer" />
-          <button type="button" className="btn btn-ghost" onClick={onClose}>
+        <div className="modal-actions">
+          <span className="spacer" />
+          <button type="button" className="btn" onClick={onClose}>
             Cancel
           </button>
           <button type="submit" className="btn btn-primary" disabled={!ready}>
-            {initial ? <IconCheck size={16} /> : <IconPlus size={16} />}
             {initial ? "Save changes" : "Add event"}
           </button>
         </div>

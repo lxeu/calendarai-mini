@@ -7,13 +7,11 @@ import CalendarPage from "./pages/CalendarPage";
 import AddSyllabusPage from "./pages/AddSyllabusPage";
 import LoginPage from "./pages/LoginPage";
 import StudyBuddyPage from "./pages/StudyBuddyPage";
-import Background from "./components/Background";
 import CommandPalette from "./components/CommandPalette";
 import DeadlineModal from "./components/DeadlineModal";
 import LoadingScreen from "./components/LoadingScreen";
 import NavBar from "./components/NavBar";
 import Toaster from "./components/Toaster";
-import { confetti } from "./lib/confetti";
 import { courseColor, listCourses } from "./lib/courses";
 import { downloadICS } from "./lib/ics";
 import { modKey } from "./lib/platform";
@@ -60,8 +58,7 @@ export default function App() {
       return;
     }
     setDeadlines((prev) => [...prev, ...data]);
-    confetti({ count: items.length > 1 ? 160 : 45 });
-    if (items.length > 1) toast(`Added ${items.length} deadlines to your calendar`, "success");
+    if (items.length > 1) toast(`Added ${items.length} deadlines`, "success");
   }
 
   // Edit a deadline (also used for marking it done)
@@ -79,7 +76,7 @@ export default function App() {
     }
     const before = deadlines.find((d) => d.id === id);
     setDeadlines((prev) => prev.map((d) => (d.id === id ? data[0] : d)));
-    if (!!before?.done !== !!done) toast(done ? `Nice, "${title}" is done` : "Marked not done", "success");
+    if (!!before?.done !== !!done) toast(done ? `Marked "${title}" done` : `Marked "${title}" not done`, "success");
     else toast("Saved", "success");
   }
 
@@ -106,7 +103,6 @@ export default function App() {
 
   return (
     <>
-      <Background />
       {checking ? (
         <LoadingScreen />
       ) : !session ? (
@@ -166,7 +162,7 @@ function Shell({ session, deadlines, onAdd, onSave, onDelete, onClear }: ShellPr
 
   function exportAll() {
     downloadICS(deadlines);
-    toast(`Exported ${deadlines.length} deadlines as an .ics file`, "success");
+    toast(`Exported ${deadlines.length} deadlines (.ics)`, "success");
   }
 
   const meta = session.user.user_metadata ?? {};
@@ -192,7 +188,7 @@ function Shell({ session, deadlines, onAdd, onSave, onDelete, onClear }: ShellPr
       <footer className="container foot">
         <span>CalendarAI Mini</span>
         <span>
-          Press <kbd>{modKey} K</kbd> to search
+          <kbd>{modKey} K</kbd> to search
         </span>
       </footer>
 

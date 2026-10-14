@@ -1,7 +1,7 @@
-import { useState, type CSSProperties } from "react";
-import { NavLink, useLocation } from "react-router";
+import { useState } from "react";
+import { NavLink } from "react-router";
 import Logo from "./Logo";
-import { IconCalendar, IconLogout, IconSearch, IconSparkles, IconUsers } from "./Icons";
+import { IconLogout, IconSearch } from "./Icons";
 import { modKey } from "../lib/platform";
 
 type Props = {
@@ -12,43 +12,35 @@ type Props = {
 };
 
 export default function NavBar({ email, avatarUrl, onSignOut, onOpenPalette }: Props) {
-  const { pathname } = useLocation();
   const [avatarFailed, setAvatarFailed] = useState(false);
-  const activeTab = pathname.startsWith("/add") ? 1 : pathname.startsWith("/buddy") ? 2 : 0;
 
   return (
     <header className="nav-wrap">
-      <nav className="nav">
+      <nav className="nav container">
         <NavLink to="/" className="brand" aria-label="CalendarAI Mini home">
-          <Logo size={30} />
-          <span className="brand-name">
-            CalendarAI<span className="brand-mini">mini</span>
-          </span>
+          <Logo />
+          <span className="brand-name">CalendarAI Mini</span>
         </NavLink>
 
-        <div className="seg" style={{ "--i": activeTab, "--n": 3 } as CSSProperties}>
-          <span className="seg-ind" aria-hidden="true" />
-          <NavLink to="/" end className="seg-link">
-            <IconCalendar size={16} />
-            <span>Calendar</span>
+        <div className="tabs">
+          <NavLink to="/" end className="tab">
+            Calendar
           </NavLink>
-          <NavLink to="/add" className="seg-link">
-            <IconSparkles size={16} />
-            <span>Add syllabus</span>
+          <NavLink to="/add" className="tab">
+            Add syllabus
           </NavLink>
-          <NavLink to="/buddy" className="seg-link">
-            <IconUsers size={16} />
-            <span>Study buddy</span>
+          <NavLink to="/buddy" className="tab">
+            Study buddy
           </NavLink>
         </div>
 
         <div className="nav-right">
-          <button className="cmdk-btn" onClick={onOpenPalette} aria-label="Search and commands">
-            <IconSearch size={16} />
-            <span className="cmdk-text">Search</span>
+          <button className="search-btn" onClick={onOpenPalette} aria-label="Search and commands">
+            <IconSearch />
+            <span className="search-text">Search</span>
             <kbd>{modKey} K</kbd>
           </button>
-          <div className="user" title={email}>
+          <span className="user" title={email}>
             {avatarUrl && !avatarFailed ? (
               <img
                 className="avatar"
@@ -62,11 +54,9 @@ export default function NavBar({ email, avatarUrl, onSignOut, onOpenPalette }: P
                 {(email[0] ?? "?").toUpperCase()}
               </span>
             )}
-            <span className="user-email">{email}</span>
-          </div>
-          <button className="btn btn-ghost btn-sm signout" onClick={onSignOut} aria-label="Sign out">
-            <IconLogout size={16} />
-            <span className="signout-text">Sign out</span>
+          </span>
+          <button className="icon-btn" onClick={onSignOut} aria-label="Sign out" title="Sign out">
+            <IconLogout />
           </button>
         </div>
       </nav>
