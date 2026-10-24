@@ -2,7 +2,7 @@ import { useEffect, useId, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import HeroDemo from "../components/HeroDemo";
 import Logo from "../components/Logo";
-import { IconAlert, IconCheck, IconEye, IconEyeOff, IconGoogle, IconInfo } from "../components/Icons";
+import { IconAlert, IconCheck, IconEye, IconExternal, IconEyeOff, IconGoogle, IconInfo } from "../components/Icons";
 
 type Message = { text: string; kind: "error" | "info" };
 type Busy = "signin" | "signup" | "google" | null;
@@ -10,6 +10,7 @@ type Busy = "signin" | "signup" | "google" | null;
 // Only UAlberta accounts can sign up. The real check is the Supabase signup hook
 // (supabase/restrict_signup.sql); this one just gives a faster, friendlier message.
 const SCHOOL_DOMAIN = "ualberta.ca";
+const TOUR_URL = "https://cohort-landing-pg.vercel.app/";
 
 // If Supabase rejected a Google signup, it sends us back with ?error_description=... (or #error_description=...)
 function oauthError(): Message | null {
@@ -172,6 +173,14 @@ export default function LoginPage() {
             </button>
           </div>
         </form>
+
+        {/* Sign-up is UAlberta-only, so visitors (recruiters, mostly) get a hosted walkthrough instead */}
+        <p className="auth-tour">
+          Just exploring?{" "}
+          <a href={TOUR_URL} target="_blank" rel="noopener noreferrer">
+            Take a tour of the app <IconExternal size={13} />
+          </a>
+        </p>
       </section>
     </div>
   );
